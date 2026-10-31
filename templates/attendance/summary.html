@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-6 flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-900">Attendance Summary</h1>
+    <a href="{% url 'attendance:mark_attendance' %}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">&larr; Mark Attendance</a>
+  </div>
+
+  <div class="bg-white p-4 rounded-lg shadow mb-6">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div>
+        <label for="class_arm" class="block text-sm font-medium text-gray-700 mb-1">Class Arm</label>
+        <select name="class_arm" id="class_arm" required class="w-full border-gray-300 rounded-md shadow-sm">
+          <option value="">-- Select Class Arm --</option>
+          {% for arm in class_arms %}
+            <option value="{{ arm.id }}" {% if selected_arm_id == arm.id %}selected{% endif %}>
+              {{ arm.class_level.name }} - Arm {{ arm.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+        <input type="date" name="start_date" id="start_date" value="{{ start_date }}" required class="w-full border-gray-300 rounded-md shadow-sm">
+      </div>
+      <div>
+        <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+        <input type="date" name="end_date" id="end_date" value="{{ end_date }}" required class="w-full border-gray-300 rounded-md shadow-sm">
+      </div>
+      <div class="flex items-end">
+        <button type="submit" class="w-full bg-blue-600 text-white font-medium py-2 px-4 rounded-md shadow hover:bg-blue-700">Generate Report</button>
+      </div>
+    </form>
+  </div>
+
+  {% if summary_data %}
+  <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Admission No</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student Name</th>
+          <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Present</th>
+          <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Late</th>
+          <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Absent</th>
+          <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Attendance %</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        {% for row in summary_data %}
+        <tr>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ row.student.admission_number }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ row.student.user.get_full_name|default:row.student.user.username }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-green-600 font-semibold">{{ row.present_days }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-yellow-600 font-semibold">{{ row.late_days }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-red-600 font-semibold">{{ row.absent_days }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-gray-800">{{ row.percentage }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

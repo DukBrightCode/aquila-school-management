@@ -1,0 +1,114 @@
+{% load static %}
+
+<footer style="background-color: #0f172a; color: #f8fafc;" class="bg-slate-900 text-slate-100 border-t border-slate-800 mt-auto">
+    <div style="max-width: 1280px; margin: 0 auto; padding: 2.5rem 1rem;">
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #1e293b;">
+
+            <!-- Column 1: School identity -->
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <img src="{% if SITE.logo %}{{ SITE.logo.url }}{% else %}{% static 'src/images/logo.jpg' %}{% endif %}" alt="{{ SCHOOL_NAME }} logo" style="width: 2.5rem; height: 2.5rem; border-radius: 9999px; border: 1px solid #334155; flex-shrink: 0; object-fit: cover;">
+                    <h3 style="font-size: 0.875rem; font-weight: 700; color: #ffffff; margin: 0;">{{ SCHOOL_NAME }}</h3>
+                </div>
+                {% if SCHOOL_MOTTO %}<p style="font-size: 0.75rem; color: #fbbf24; font-style: italic; font-weight: 500; margin: 0;">"{{ SCHOOL_MOTTO }}"</p>{% endif %}
+                {% if SITE.tagline %}<p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.5; margin: 0;">{{ SITE.tagline }}</p>{% endif %}
+            </div>
+
+            <!-- Column 2: Campus address and website -->
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <h4 style="font-size: 0.75rem; font-weight: 600; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Campus Address</h4>
+                <p style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.5; display: flex; align-items: flex-start; gap: 0.5rem; margin: 0;">
+                    <svg style="width: 1rem; height: 1rem; color: #f59e0b; flex-shrink: 0; margin-top: 0.125rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span>{% if SITE.address %}{{ SITE.address }}{% else %}Plot 110, N Crescent, Kapwa Junction, Near Christ Embassy Junction, Phase 2 Lugbe FCT-Abuja{% endif %}</span>
+                </p>
+                <div style="padding-top: 0.25rem;">
+                    <a href="{% if SITE.website %}{{ SITE.website }}{% else %}http://www.aquilabritishinternationalschools.com{% endif %}" target="_blank" rel="noopener noreferrer" style="font-size: 0.75rem; color: #60a5fa; text-decoration: underline; display: flex; align-items: center; gap: 0.375rem;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m-9 9a9 9 0 019-9"/>
+                        </svg>
+                        <span>{% if SITE.website %}{{ SITE.website|cut:"https://"|cut:"http://" }}{% else %}www.aquilabritishinternationalschools.com{% endif %}</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Column 3: Contact lines -->
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <h4 style="font-size: 0.75rem; font-weight: 600; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Contact Lines</h4>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.75rem; color: #cbd5e1;">
+                    {% for line in SITE.phone_lines %}
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <svg style="width: 1rem; height: 1rem; color: #34d399; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                        </svg>
+                        <span>{{ line }}</span>
+                    </div>
+                    {% empty %}
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <svg style="width: 1rem; height: 1rem; color: #34d399; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                        </svg>
+                        <span>08161351248, 08051851894</span>
+                    </div>
+                    <p style="padding-left: 1.5rem; margin: 0;">09062542583, 09062542584</p>
+                    <p style="padding-left: 1.5rem; color: #94a3b8; margin: 0;">09062542582</p>
+                    {% endfor %}
+                    {% if SITE.email %}
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <svg style="width: 1rem; height: 1rem; color: #34d399; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <a href="mailto:{{ SITE.email }}" style="color: #cbd5e1;">{{ SITE.email }}</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Column 4: Portal login and social links -->
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <h4 style="font-size: 0.75rem; font-weight: 600; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Staff &amp; Student Access</h4>
+                <div>
+                    <a href="{% url 'accounts:login' %}" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; padding: 0.625rem 1rem; background-color: #2563eb; color: #ffffff; font-size: 0.75rem; font-weight: 600; border-radius: 0.5rem; text-decoration: none;">
+                        <svg style="width: 1rem; height: 1rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                        </svg>
+                        <span>Portal Login</span>
+                    </a>
+                </div>
+
+                {% if SITE.facebook or SITE.instagram or SITE.youtube %}
+                <div style="padding-top: 0.25rem;">
+                    <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 500;">Follow Us:</p>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        {% if SITE.facebook %}
+                        <a href="{{ SITE.facebook }}" aria-label="Facebook" target="_blank" rel="noopener noreferrer" style="width: 2rem; height: 2rem; border-radius: 9999px; background-color: #1e293b; color: #94a3b8; display: flex; align-items: center; justify-content: center;">
+                            <svg style="width: 1rem; height: 1rem;" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg>
+                        </a>
+                        {% endif %}
+                        {% if SITE.instagram %}
+                        <a href="{{ SITE.instagram }}" aria-label="Instagram" target="_blank" rel="noopener noreferrer" style="width: 2rem; height: 2rem; border-radius: 9999px; background-color: #1e293b; color: #94a3b8; display: flex; align-items: center; justify-content: center;">
+                            <svg style="width: 1rem; height: 1rem;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                        </a>
+                        {% endif %}
+                        {% if SITE.youtube %}
+                        <a href="{{ SITE.youtube }}" aria-label="YouTube" target="_blank" rel="noopener noreferrer" style="width: 2rem; height: 2rem; border-radius: 9999px; background-color: #1e293b; color: #94a3b8; display: flex; align-items: center; justify-content: center;">
+                            <svg style="width: 1rem; height: 1rem;" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Copyright row -->
+        <div style="padding-top: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.75rem; color: #94a3b8;">
+            <p style="margin: 0;">&copy; {% now "Y" %} {{ SCHOOL_NAME }}. All rights reserved.</p>
+            <p style="margin: 0;">Designed for Educational Excellence</p>
+        </div>
+    </div>
+</footer>

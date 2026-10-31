@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admissions | {{ SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-r from-blue-900 to-blue-800 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-4xl font-bold text-white">Admissions</h1>
+        <p class="mt-2 text-xl text-blue-100">Join our community of learners</p>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-900">Admission Process</h2>
+        <p class="mt-4 text-lg text-gray-600">Follow these simple steps to become part of our school family</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">1</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Submit Application</h3>
+            <p class="text-gray-600">Complete and submit the online application form with required documents.</p>
+        </div>
+
+        <div class="text-center">
+            <div class="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">2</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Assessment</h3>
+            <p class="text-gray-600">Applicants undergo entrance assessment to determine appropriate placement.</p>
+        </div>
+
+        <div class="text-center">
+            <div class="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">3</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Interview</h3>
+            <p class="text-gray-600">Parents and students meet with our admissions team for a personal interview.</p>
+        </div>
+
+        <div class="text-center">
+            <div class="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">4</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Enrollment</h3>
+            <p class="text-gray-600">Complete enrollment and fee payment to secure your place.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Requirements</h2>
+            <ul class="space-y-4">
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-green-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-600">Completed application form</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-green-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-600">Birth certificate (original and copy)</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-green-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-600">Previous school reports/transcripts</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-green-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-600">Passport photographs (4 copies)</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-green-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-600">Immunization records</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-6 h-6 text-green-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-600">Parent/Guardian identification</span>
+                </li>
+            </ul>
+        </div>
+
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900 mb-6">Important Dates</h2>
+            <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center border-b border-gray-200 pb-4">
+                        <span class="text-gray-600">Application Opens</span>
+                        <span class="font-semibold text-gray-900">January 15th</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-gray-200 pb-4">
+                        <span class="text-gray-600">Application Deadline</span>
+                        <span class="font-semibold text-gray-900">March 31st</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-gray-200 pb-4">
+                        <span class="text-gray-600">Entrance Assessment</span>
+                        <span class="font-semibold text-gray-900">April 15th - 20th</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-gray-200 pb-4">
+                        <span class="text-gray-600">Interview Period</span>
+                        <span class="font-semibold text-gray-900">May 1st - 15th</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Admission Results</span>
+                        <span class="font-semibold text-gray-900">May 30th</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 bg-blue-50 rounded-lg p-6 border border-blue-200">
+                <h3 class="text-xl font-bold text-blue-900 mb-2">Need More Information?</h3>
+                <p class="text-blue-700 mb-4">Contact our admissions office for personalized assistance.</p>
+                <a href="{% url 'core:contact' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    Contact Us
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div class="flex-1 min-w-0">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                Student Report Cards
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                View and manage student report cards
+            </p>
+        </div>
+    </div>
+
+    {% if current_term %}
+
+    <!-- Filters -->
+    <form method="get" class="bg-white shadow rounded-lg p-4 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 border-2 border-indigo-200">
+        <div>
+            <label for="term" class="block text-sm font-medium text-gray-700 mb-1">Term</label>
+            <select name="term" id="term" onchange="this.form.submit()" class="w-full border-gray-300 rounded-md shadow-sm">
+                {% for t in terms %}
+                <option value="{{ t.id }}" {% if t.id == current_term.id %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="arm" class="block text-sm font-medium text-gray-700 mb-1">Class</label>
+            <select name="arm" id="arm" onchange="this.form.submit()" class="w-full border-gray-300 rounded-md shadow-sm">
+                <option value="">All classes</option>
+                {% for a in arms %}
+                <option value="{{ a.id }}" {% if selected_arm_id == a.id %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="flex items-end">
+            <a href="{% url 'academics:report_card_list' %}" class="text-sm text-gray-600 hover:text-gray-900 underline mb-2">Clear filters</a>
+        </div>
+    </form>
+
+    {% if release_rows %}
+    <!-- Release switches and whole-class downloads -->
+    <div class="bg-white shadow-lg rounded-lg border-2 border-indigo-200 overflow-hidden mb-6">
+        <div class="px-6 py-3 bg-indigo-50 text-sm font-semibold text-indigo-700">
+            {% if is_admin %}Release results and download whole classes{% else %}Download whole class{% endif %}
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-indigo-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Class</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Mid Term</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Full Term</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for row in release_rows %}
+                    <tr>
+                        <td class="px-6 py-3 text-sm font-medium text-gray-900">{{ row.arm }}</td>
+
+                        <td class="px-6 py-3 text-sm">
+                            {% if row.mid_released %}<span class="text-green-700 mr-2">Released</span>{% else %}<span class="text-gray-400 mr-2">Not released</span>{% endif %}
+                            {% if is_admin or row.mid_released %}
+                            <a href="{% url 'academics:class_report_cards_pdf' row.arm.id current_term.id 'MID_TERM' %}" class="text-indigo-600 hover:text-indigo-900 mr-2">Download all</a>
+                            {% endif %}
+                            {% if is_admin %}
+                            <form method="post" action="{% url 'academics:toggle_result_release' row.arm.id current_term.id 'MID_TERM' %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-xs border rounded px-2 py-1 {% if row.mid_released %}border-red-300 text-red-700{% else %}border-green-300 text-green-700{% endif %}">
+                                    {% if row.mid_released %}Withdraw{% else %}Release{% endif %}
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-6 py-3 text-sm">
+                            {% if row.full_released %}<span class="text-green-700 mr-2">Released</span>{% else %}<span class="text-gray-400 mr-2">Not released</span>{% endif %}
+                            {% if is_admin or row.full_released %}
+                            <a href="{% url 'academics:class_report_cards_pdf' row.arm.id current_term.id 'FULL_TERM' %}" class="text-indigo-600 hover:text-indigo-900 mr-2">Download all</a>
+                            {% endif %}
+                            {% if is_admin %}
+                            <form method="post" action="{% url 'academics:toggle_result_release' row.arm.id current_term.id 'FULL_TERM' %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-xs border rounded px-2 py-1 {% if row.full_released %}border-red-300 text-red-700{% else %}border-green-300 text-green-700{% endif %}">
+                                    {% if row.full_released %}Withdraw{% else %}Release{% endif %}
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Students -->
+    <div class="bg-white shadow-lg rounded-lg p-6 border-2 border-indigo-200">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-indigo-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Admission No</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Student Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Class</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Term</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-indigo-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for student in students %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ student.admission_number }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ student.full_name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ student.current_class_level.name }} {{ student.current_class_arm.name|default:"" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ current_term.name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                            <div class="flex flex-col space-y-1">
+                                <div>
+                                    <span class="text-xs text-gray-500">Full Term:</span>
+                                    {% if student.can_open_full %}
+                                    <a href="{% url 'academics:report_card' student.id current_term.id 'FULL_TERM' 'full' %}" class="text-indigo-600 hover:text-indigo-900 ml-1">
+                                        View
+                                    </a>
+                                    <a href="{% url 'academics:generate_report_card_pdf' student.id current_term.id 'FULL_TERM' 'full' %}" class="text-green-600 hover:text-green-900 ml-1">
+                                        PDF
+                                    </a>
+                                    {% else %}
+                                    <span class="text-xs text-gray-400 ml-1">Not released</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <span class="text-xs text-gray-500">Mid Term:</span>
+                                    {% if student.can_open_mid %}
+                                    <a href="{% url 'academics:report_card' student.id current_term.id 'MID_TERM' 'full' %}" class="text-indigo-600 hover:text-indigo-900 ml-1">
+                                        View
+                                    </a>
+                                    <a href="{% url 'academics:generate_report_card_pdf' student.id current_term.id 'MID_TERM' 'full' %}" class="text-green-600 hover:text-green-900 ml-1">
+                                        PDF
+                                    </a>
+                                    {% else %}
+                                    <span class="text-xs text-gray-400 ml-1">Not released</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500">
+                            No students found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6">
+        <h3 class="text-sm font-medium text-yellow-800">No Current Term Set</h3>
+        <div class="mt-2 text-sm text-yellow-700">
+            Please set a current term in the school structure to view report cards.
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

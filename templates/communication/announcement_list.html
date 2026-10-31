@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- Toast Notification Feedback Area -->
+{% if messages %}
+<div class="fixed top-20 right-4 z-50 space-y-2 max-w-md">
+    {% for message in messages %}
+    <div class="p-4 rounded-xl shadow-lg border text-sm flex items-center justify-between {% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-800{% else %}bg-emerald-50 border-emerald-200 text-emerald-800{% endif %}"
+         x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)">
+        <span>{{ message }}</span>
+        <button @click="show = false" class="ml-4 text-slate-400 hover:text-slate-600">&times;</button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="max-w-5xl mx-auto py-8 px-4">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-slate-900">School Announcements</h1>
+            <p class="text-slate-600 text-sm mt-1">Stay updated with official bulletins, notices, and events.</p>
+        </div>
+        
+        <!-- Only pure ADMIN role users see the Post button -->
+        {% if request.user.role == 'ADMIN' %}
+        <a href="{% url 'communication:create' %}" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 shadow-sm transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Post Announcement
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="space-y-4">
+        {% for announcement in announcements %}
+        <div class="bg-white p-6 rounded-2xl shadow-sm border {% if announcement.is_pinned %}border-amber-300 ring-2 ring-amber-100{% else %}border-slate-200{% endif %} transition hover:shadow-md">
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex items-center space-x-2">
+                    {% if announcement.is_pinned %}
+                    <span class="px-2.5 py-0.5 text-xs font-bold bg-amber-100 text-amber-800 rounded-lg flex items-center gap-1">
+                        ⭐ Pinned
+                    </span>
+                    {% endif %}
+                    <h2 class="text-xl font-bold text-slate-900">{{ announcement.title }}</h2>
+                </div>
+                
+                <span class="px-3 py-1 text-xs font-semibold rounded-full 
+                    {% if announcement.target_role == 'ALL' %} bg-emerald-50 text-emerald-700 border border-emerald-200
+                    {% elif announcement.target_role == 'STAFF' %} bg-indigo-50 text-indigo-700 border border-indigo-200
+                    {% elif announcement.target_role == 'TEACHERS' %} bg-amber-50 text-amber-700 border border-amber-200
+                    {% elif announcement.target_role == 'LIBRARIANS' %} bg-purple-50 text-purple-700 border border-purple-200
+                    {% else %} bg-blue-50 text-blue-700 border border-blue-200 {% endif %}">
+                    {{ announcement.get_target_role_display }}
+                </span>
+            </div>
+
+            <p class="text-slate-700 whitespace-pre-line text-sm leading-relaxed mb-4">{{ announcement.body }}</p>
+
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-slate-500 border-t border-slate-100 pt-4 gap-2">
+                <span>Posted by <strong class="text-slate-700">{{ announcement.posted_by.get_full_name|default:announcement.posted_by.username }}</strong> on {{ announcement.created_at|date:"M d, Y H:i" }}</span>
+                
+                <div class="flex items-center gap-4">
+                    {% if announcement.expires_at %}
+                    <span class="text-amber-600 font-medium">Expires: {{ announcement.expires_at|date:"M d, Y" }}</span>
+                    {% endif %}
+                    
+                    <!-- Only pure ADMIN role users see Edit & Delete links -->
+                    {% if request.user.role == 'ADMIN' %}
+                    <div class="space-x-3 font-medium">
+                        <a href="{% url 'communication:edit' announcement.pk %}" class="text-blue-600 hover:text-blue-800">Edit</a>
+                        <a href="{% url 'communication:delete' announcement.pk %}" class="text-red-600 hover:text-red-800">Delete</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-16 bg-white rounded-2xl shadow-sm border border-slate-200">
+            <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 11-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+            <p class="text-slate-500 font-medium">No announcements available right now.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

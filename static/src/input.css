@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Force-include custom button states to guarantee visibility */
+.btn-edit-custom {
+  background-color: #d97706 !important;
+  color: #ffffff !important;
+}
+.btn-edit-custom:hover {
+  background-color: #b45309 !important;
+}
+
+.btn-delete-custom {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+}
+.btn-delete-custom:hover {
+  background-color: #b91c1c !important;
+}

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Staff Directory</h1>
+    <div class="space-x-2">
+      <a href="{% url 'staff:teacher_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md shadow-sm">
+        Add Teacher
+      </a>
+      <a href="{% url 'staff:non_teaching_create' %}" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md shadow-sm">
+        Add Non-Teaching Staff
+      </a>
+    </div>
+  </div>
+
+  <h2 class="text-lg font-semibold text-gray-800 mb-3">Academic Teachers</h2>
+  <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Staff ID</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date Employed</th>
+          <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        {% for teacher in teachers %}
+        <tr>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ teacher.staff_id }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ teacher.user.get_full_name|default:teacher.user.username }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ teacher.date_employed }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <a href="{% url 'staff:teacher_detail' teacher.pk %}" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
+            <a href="{% url 'staff:teacher_update' teacher.pk %}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="text-lg font-semibold text-gray-800 mb-3">Non-Teaching Staff</h2>
+  <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Staff ID</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Designation</th>
+          <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        {% for staff in non_teaching_staff %}
+        <tr>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ staff.staff_id }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ staff.user.get_full_name|default:staff.user.username }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ staff.designation }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <a href="{% url 'staff:non_teaching_update' staff.pk %}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

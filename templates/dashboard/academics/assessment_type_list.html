@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Manage Assessment Types</h1>
+        <a href="{% url 'dashboard:assessment_type_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow">
+            + Add Assessment Type
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="mb-4 p-4 rounded text-sm font-medium {% if message.tags == 'success' %}bg-green-100 text-green-700 border border-green-300{% else %}bg-red-100 text-red-700 border border-red-300{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="bg-white rounded shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600">Name</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600">Max Score</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600">Weight (%)</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-600">Term</th>
+                    <th class="px-6 py-3 text-right font-semibold text-gray-600">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white">
+                {% for at in assessment_types %}
+                <tr>
+                    <td class="px-6 py-4 text-gray-800 font-medium">{{ at.name }}</td>
+                    <td class="px-6 py-4 text-gray-600">{{ at.max_score }}</td>
+                    <td class="px-6 py-4 text-gray-600">{{ at.weight_percentage }}%</td>
+                    <td class="px-6 py-4 text-gray-600">{{ at.term.name }}</td>
+                    <td class="px-6 py-4 text-right space-x-2">
+                        <a href="{% url 'dashboard:assessment_type_update' at.id %}" class="text-blue-600 hover:underline font-medium">Edit</a>
+                        <a href="{% url 'dashboard:assessment_type_delete' at.id %}" class="text-red-600 hover:underline font-medium">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500 italic">No assessment types configured yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

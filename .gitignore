@@ -1,0 +1,29 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Local database (we are using Neon on production, so keep local sqlite out)
+db.sqlite3
+db.sqlite3-journal
+
+# Environment variables and secrets (CRITICAL for security)
+.env
+
+# Media uploads (user-uploaded files)
+media/
+
+# Static compilation output
+staticfiles/
+
+# IDE files (VS Code)
+.vscode/
+.idea/
+*.swp
+*.swo

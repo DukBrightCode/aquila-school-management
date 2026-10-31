@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}About Us | {{ SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-r from-blue-900 to-blue-800 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-4xl font-bold text-white">About Us</h1>
+        <p class="mt-2 text-xl text-blue-100">Learn more about our school and our mission</p>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Our History</h2>
+            <p class="text-gray-600 leading-relaxed mb-6">
+                Founded with a vision to provide world-class education, {{ SCHOOL_NAME }} has been a beacon of academic excellence
+                for years. Our commitment to nurturing young minds and building character has made us one of the most respected
+                educational institutions in the region.
+            </p>
+            <p class="text-gray-600 leading-relaxed">
+                From our humble beginnings to our current state-of-the-art facilities, we have remained dedicated to our core
+                values of excellence, integrity, and service to our community.
+            </p>
+        </div>
+
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Our Mission</h2>
+            <p class="text-gray-600 leading-relaxed mb-6">
+                To provide a transformative educational experience that empowers students to achieve their full potential,
+                develop strong character, and become responsible global citizens.
+            </p>
+
+            <h2 class="text-3xl font-bold text-gray-900 mb-4 mt-8">Our Vision</h2>
+            <p class="text-gray-600 leading-relaxed">
+                To be a leading institution of learning recognized for academic excellence, innovation, and the development
+                of well-rounded individuals who make positive contributions to society.
+            </p>
+        </div>
+    </div>
+
+    <div class="mt-16">
+        <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Our Core Values</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Excellence</h3>
+                <p class="text-gray-600">We strive for the highest standards in everything we do.</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Integrity</h3>
+                <p class="text-gray-600">We act with honesty and uphold strong moral principles.</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Compassion</h3>
+                <p class="text-gray-600">We care for each other and our community.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

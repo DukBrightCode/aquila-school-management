@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div id="score-entry-app"
+     data-url="{% url 'academics:score_entry_data' %}"
+     data-subjects-url="{% url 'academics:get_class_subjects' %}"
+     data-save-url="{% url 'academics:score_entry_save' %}"
+     class="container mx-auto p-6">
+
+    <h1 class="text-2xl font-bold mb-6 text-gray-800">Academic Score Entry</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-white p-4 rounded shadow">
+        <div>
+            <label for="filter-class-arm" class="block text-sm font-medium text-gray-700">Class Arm</label>
+            <select id="filter-class-arm" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                <option value="">-- Select Class Arm --</option>
+                {% for arm in class_arms %}
+                    <option value="{{ arm.id }}">{{ arm.class_level.name }} {{ arm.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="filter-subject" class="block text-sm font-medium text-gray-700">Subject</label>
+            <select id="filter-subject" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" disabled>
+                <option value="">-- Select Class First --</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="filter-term" class="block text-sm font-medium text-gray-700">Term</label>
+            <select id="filter-term" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                <option value="">-- Select Term --</option>
+                {% for term in terms %}
+                    <option value="{{ term.id }}">{{ term.name }} ({% if term.session %}{{ term.session.name }}{% else %}{{ term.session }}{% endif %})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="filter-exam-type" class="block text-sm font-medium text-gray-700">Exam Type</label>
+            <select id="filter-exam-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                <option value="FULL_TERM">Full Term</option>
+                <option value="MID_TERM">Mid Term</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="score-message" class="hidden mb-4 p-4 rounded text-sm font-medium"></div>
+
+    <div id="score-table-wrap" class="overflow-x-auto bg-white rounded shadow mb-6">
+        <p class="p-4 text-gray-500 italic">Select Class Arm, Subject, Term, and Exam Type to load assessment grid.</p>
+    </div>
+
+    <div class="flex justify-end">
+        <button id="save-all-scores" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow hidden">
+            Save All Scores
+        </button>
+    </div>
+</div>
+
+<script src="{% static 'src/js/utils/api.js' %}"></script>
+<script src="{% static 'src/js/results.js' %}"></script>
+{% endblock %}

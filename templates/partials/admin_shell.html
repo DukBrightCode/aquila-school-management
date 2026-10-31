@@ -1,0 +1,44 @@
+{# Shared sidebar layout for admin pages. Include it inside {% block content %}. #}
+<style>
+    /* Sidebar sits directly below the sticky navbar and fills the rest of the screen */
+    .admin-side {
+        display: none;
+        flex-direction: column;
+        flex: none;
+        width: 16rem;
+        align-self: flex-start;
+        position: sticky;
+        top: var(--header-h, 85px);
+        height: calc(100vh - var(--header-h, 85px));
+        overflow-y: auto;
+        padding: 1.25rem 0 1.5rem;
+        background: #ffffff;
+        border-right: 1px solid #c7d2fe;
+        scrollbar-width: thin;
+        scrollbar-color: #a5b4fc transparent;
+    }
+    .admin-side::-webkit-scrollbar { width: 8px; }
+    .admin-side::-webkit-scrollbar-thumb { background: #a5b4fc; border-radius: 9999px; }
+    .admin-side::-webkit-scrollbar-track { background: transparent; }
+    .admin-main { flex: 1 1 0%; min-width: 0; }
+    .wm-mobile-menu { display: block; }
+
+    @media (min-width: 1024px) {
+        .admin-side { display: flex; }
+        .wm-mobile-menu { display: none; }
+    }
+</style>
+<script>
+    /* Measure the real navbar height so the sidebar always lines up with it */
+    (function () {
+        var header = document.querySelector('header.aquila-header');
+        function setHeight() {
+            if (header) {
+                document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px');
+            }
+        }
+        setHeight();
+        window.addEventListener('resize', setHeight);
+        window.addEventListener('load', setHeight);
+    })();
+</script>

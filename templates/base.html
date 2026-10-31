@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ SCHOOL_NAME }}{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'dist/output.css' %}">
+   
+</head>
+<body class="flex flex-col min-h-screen font-sans text-gray-900 bg-gray-50">
+
+    {% include 'partials/navbar.html' %}
+
+    <main class="flex-grow w-full">
+        
+        <!-- Django Feedback Messages -->
+        {% if messages %}
+            <div class="space-y-3 mb-6">
+                {% for message in messages %}
+                    <div class="p-4 rounded-md border text-sm font-medium flex items-center justify-between
+                        {% if message.tags == 'success' %}
+                            bg-green-50 border-green-200 text-green-800
+                        {% elif message.tags == 'error' %}
+                            bg-red-50 border-red-200 text-red-800
+                        {% elif message.tags == 'warning' %}
+                            bg-yellow-50 border-yellow-200 text-yellow-800
+                        {% else %}
+                            bg-blue-50 border-blue-200 text-blue-800
+                        {% endif %}">
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    {% include 'partials/footer.html' %}
+
+</body>
+</html>

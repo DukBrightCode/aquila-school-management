@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-xl font-bold text-gray-900 mb-2">Choose Subjects for {{ arm.class_level.name }} {{ arm.name }}</h2>
+    <p class="text-sm text-gray-500 mb-6">
+      Tick the subjects your class offers and type the subject teacher's name for each one.
+      The name appears on the report card.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <div class="space-y-3">
+        {% for row in rows %}
+        <div class="flex items-center gap-4">
+          <div class="flex items-center w-1/2">
+            <input
+              type="checkbox"
+              name="subjects"
+              value="{{ row.subject.id }}"
+              id="subject_{{ row.subject.id }}"
+              {% if row.checked %}checked{% endif %}
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            >
+            <label for="subject_{{ row.subject.id }}" class="ml-3 text-sm text-gray-700">
+              {{ row.subject.name }} ({{ row.subject.code }})
+            </label>
+          </div>
+          <input
+            type="text"
+            name="teacher_{{ row.subject.id }}"
+            value="{{ row.teacher_name }}"
+            placeholder="Subject teacher's name"
+            class="w-1/2 border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500"
+          >
+        </div>
+        {% empty %}
+        <p class="text-sm text-gray-500">No subjects exist yet. Ask the admin to add subjects.</p>
+        {% endfor %}
+      </div>
+      <div class="flex justify-end space-x-3 mt-6">
+        <a href="{% url 'dashboard:teacher_student_list' %}" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md">Cancel</a>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save Subjects</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

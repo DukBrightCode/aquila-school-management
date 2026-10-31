@@ -1,0 +1,499 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home | {{ SCHOOL_NAME }}{% endblock %}
+
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+.hp{--navy:#0E2240;--navy2:#16315B;--gold:#C99A2E;--goldsoft:#EBDDB5;--ink:#1B2433;--mute:#5B6678;--paper:#F4F6F9;--line:#DCE2EB;font-family:'Public Sans',system-ui,sans-serif;color:var(--ink)}
+.hp h1,.hp h2,.hp h3,.hp .serif{font-family:'Libre Baskerville',Georgia,serif}
+.hp .wrap{max-width:80rem;margin:0 auto;padding:0 1.25rem}
+.hp .sec{padding:4.5rem 0}
+.hp .paper{background:var(--paper)}
+.hp .navy{background:var(--navy);color:#fff}
+.hp .h2{font-size:1.9rem;line-height:1.25;font-weight:700;color:var(--navy)}
+.hp .navy .h2{color:#fff}
+.hp .rule{display:block;width:3.5rem;height:3px;background:var(--gold);margin-top:.9rem}
+.hp .btn{display:inline-block;padding:.8rem 1.5rem;font-weight:600;font-size:.95rem;border-radius:.25rem;transition:background .15s,color .15s}
+.hp .btn-gold{background:var(--gold);color:var(--navy)}
+.hp .btn-gold:hover{background:#DBAE45}
+.hp .btn-light{background:#fff;color:var(--navy)}
+.hp .btn-light:hover{background:var(--goldsoft)}
+.hp .btn-navy{background:var(--navy);color:#fff}
+.hp .btn-navy:hover{background:var(--navy2)}
+.hp .btn-line{border:1px solid currentColor}
+.hp .more{font-weight:600;color:var(--navy);border-bottom:2px solid var(--gold);padding-bottom:1px}
+.hp .card{background:#fff;border:1px solid var(--line);border-radius:.375rem;overflow:hidden}
+.hp .meta{font-size:.82rem;font-weight:600;color:var(--mute)}
+.hp a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+/* hover effects */
+.hp .zoom{overflow:hidden}
+.hp .zoom img{transition:transform .6s ease}
+.hp .zoom:hover img{transform:scale(1.08)}
+.hp .card{transition:border-color .2s,box-shadow .2s}
+.hp .card:hover{border-color:var(--gold);box-shadow:0 8px 22px rgba(14,34,64,.13)}
+.hp .card h3,.hp .feat h3{transition:color .2s}
+.hp .card:hover h3,.hp .feat:hover h3{color:#8A6516 !important}
+.hp .feat{border-top:3px solid var(--navy);padding-top:1.25rem;transition:border-color .2s}
+.hp .feat:hover{border-top-color:var(--gold)}
+.hp figure{transition:background .2s}
+.hp figure:hover{background:#1E3F73 !important}
+.hp .stat{transition:background .2s}
+.hp .stat:hover{background:var(--paper)}
+.hp .more{transition:color .2s,border-color .2s}
+.hp .more:hover{color:#8A6516;border-bottom-color:var(--navy)}
+@media (prefers-reduced-motion:reduce){.hp .zoom img,.hp .card,.hp .feat,.hp figure{transition:none}.hp .zoom:hover img{transform:none}}
+.hp summary{cursor:pointer;font-weight:700;color:var(--navy);list-style-position:outside}
+.hp details.card{padding:1.1rem 1.4rem}
+.hp details[open].card{border-color:var(--gold)}
+.hp details p{margin-top:.75rem;color:var(--mute);line-height:1.7}
+.hp .hero-slide{opacity:0;transition:opacity 1.4s ease}
+.hp .hero-slide.is-on{opacity:1}
+.hp .hero-dot{width:.75rem;height:.75rem;border-radius:9999px;background:rgba(255,255,255,.5);border:0;cursor:pointer;transition:background .2s}
+.hp .hero-dot.is-on,.hp .hero-dot:hover{background:var(--gold)}
+.hp button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.hp .hero-slide{transition:none}}
+.hp .hero-shade{background:linear-gradient(90deg,rgba(14,34,64,.95) 0%,rgba(14,34,64,.8) 45%,rgba(14,34,64,.3) 100%)}
+.hp .stat+.stat{border-left:1px solid var(--line)}
+@media (max-width:767px){.hp .stat:nth-child(odd){border-left:0}.hp .h2{font-size:1.6rem}.hp .sec{padding:3.25rem 0}}
+</style>
+
+<div class="hp">
+
+{% if ANNOUNCEMENT %}
+<div style="background:var(--gold);color:var(--navy)" class="text-sm font-semibold text-center px-4 py-2">
+    {% if ANNOUNCEMENT.link %}<a href="{{ ANNOUNCEMENT.link }}" class="underline">{{ ANNOUNCEMENT.text }}</a>{% else %}{{ ANNOUNCEMENT.text }}{% endif %}
+</div>
+{% endif %}
+
+<!-- Hero -->
+<section class="relative navy overflow-hidden" style="min-height:34rem">
+    {% for s in slides %}
+    <img src="{{ s.image.url }}" alt="{% if s.title %}{{ s.title }}{% else %}{{ SCHOOL_NAME }}{% endif %}" {% if not forloop.first %}loading="lazy"{% endif %} class="hero-slide absolute inset-0 w-full h-full object-cover{% if forloop.first %} is-on{% endif %}">
+    {% empty %}
+    <img src="{% if SITE.hero_image %}{{ SITE.hero_image.url }}{% else %}{% static 'src/images/school_building.jpg' %}{% endif %}" alt="{{ SCHOOL_NAME }} campus" class="absolute inset-0 w-full h-full object-cover">
+    {% endfor %}
+    <div class="absolute inset-0 hero-shade"></div>
+    {% if slides|length > 1 %}
+    <div class="absolute left-0 right-0 flex justify-center gap-3" style="bottom:{% if stats %}5rem{% else %}1.5rem{% endif %};z-index:2">
+        {% for s in slides %}<button type="button" class="hero-dot{% if forloop.first %} is-on{% endif %}" aria-label="Show photo {{ forloop.counter }}"></button>{% endfor %}
+    </div>
+    <script>
+    (function(){var s=document.querySelectorAll('.hero-slide'),d=document.querySelectorAll('.hero-dot'),i=0,t;
+    if(s.length<2)return;
+    function go(n){s[i].classList.remove('is-on');d[i].classList.remove('is-on');i=(n+s.length)%s.length;s[i].classList.add('is-on');d[i].classList.add('is-on')}
+    if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){t=setInterval(function(){go(i+1)},6000)}
+    d.forEach(function(b,n){b.addEventListener('click',function(){clearInterval(t);go(n)})});
+    })();
+    </script>
+    {% endif %}
+    <div class="wrap relative" style="padding-top:5rem;padding-bottom:{% if stats %}8rem{% else %}5rem{% endif %}">
+        <div style="max-width:40rem">
+            <img src="{% if SITE.logo %}{{ SITE.logo.url }}{% else %}{% static 'src/images/logo.jpg' %}{% endif %}" alt="{{ SCHOOL_NAME }} crest" class="w-20 h-20 rounded-full object-cover mb-6" style="border:3px solid var(--gold)">
+            <h1 class="text-4xl sm:text-6xl font-bold leading-tight">{{ SCHOOL_NAME }}</h1>
+            {% if SCHOOL_MOTTO %}<p class="serif italic mt-4 text-xl" style="color:var(--goldsoft)">&ldquo;{{ SCHOOL_MOTTO }}&rdquo;</p>{% endif %}
+            {% if SITE.tagline %}<p class="mt-5 text-lg leading-relaxed" style="color:#D5DCE8">{{ SITE.tagline }}</p>{% endif %}
+            <div class="mt-8 flex flex-wrap gap-3">
+                {% if SITE.admissions_open %}<a href="{% url 'core:admissions' %}" class="btn btn-gold">Apply for admission</a>{% endif %}
+                <a href="{% url 'accounts:login' %}" class="btn {% if SITE.admissions_open %}btn-line text-white hover:bg-white/10{% else %}btn-light{% endif %}">Login to portal</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats -->
+{% if stats %}
+<div class="wrap relative" style="margin-top:-3.5rem;z-index:5">
+    <div class="bg-white grid grid-cols-2 md:grid-cols-4 text-center shadow-lg" style="border-top:4px solid var(--gold);border-radius:.25rem">
+        {% for s in stats %}
+        <div class="stat py-7 px-3">
+            <p class="serif text-3xl font-bold" style="color:var(--navy)">{{ s.value }}</p>
+            <p class="mt-1 text-sm" style="color:var(--mute)">{{ s.label }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Quick links -->
+{% if quick_links %}
+<section class="wrap py-12">
+    <div class="text-center mb-10">
+        <h2 class="text-3xl font-bold text-gray-900">Our Services</h2>
+        <p class="mt-2 text-lg text-gray-600">Explore our comprehensive range of school services</p>
+        <div class="mt-4 w-20 h-1 bg-indigo-600 mx-auto rounded"></div>
+    </div>
+    
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% for q in quick_links %}
+        <a href="{{ q.url }}" class="group relative bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
+            <div class="p-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600">{{ q.label }}</h3>
+                {% if q.description %}
+                <p class="text-sm text-gray-600 line-clamp-2">{{ q.description }}</p>
+                {% endif %}
+                <div class="mt-4 flex items-center text-indigo-600 font-medium text-sm group-hover:text-indigo-700">
+                    <span>Learn more</span>
+                    <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7 7 7"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Featured Services -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900">Featured Services</h2>
+            <p class="mt-2 text-lg text-gray-600">Discover our most popular educational offerings</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Admission Process -->
+            <div class="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Admissions</h3>
+                <p class="text-gray-600 mb-6">Start your application journey with our streamlined admission process.</p>
+                <a href="{% url 'core:admissions' %}" class="text-blue-600 font-semibold hover:text-blue-700 flex items-center">
+                    Learn more <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7 7 7"/></svg>
+                </a>
+            </div>
+            
+            <!-- Academics -->
+            <div class="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Academics</h3>
+                <p class="text-gray-600 mb-6">Explore our comprehensive academic programs and curriculum.</p>
+                <a href="{% url 'core:academics' %}" class="text-green-600 font-semibold hover:text-green-700 flex items-center">
+                    Learn more <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7 7 7"/></svg>
+                </a>
+            </div>
+            
+            <!-- Contact -->
+            <div class="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow">
+                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6">
+                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Contact Us</h3>
+                <p class="text-gray-600 mb-6">Get in touch with our friendly staff for any questions.</p>
+                <a href="{% url 'core:contact' %}" class="text-purple-600 font-semibold hover:text-purple-700 flex items-center">
+                    Learn more <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7 7 7"/></svg>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Principal's message -->
+{% if SITE.principal_message %}
+<section class="sec">
+    <div class="wrap grid md:grid-cols-5 gap-12 items-center">
+        {% if SITE.principal_photo %}
+        <div class="md:col-span-2 relative max-w-sm mx-auto w-full">
+            <div class="absolute" style="inset:1rem -1rem -1rem 1rem;background:var(--navy);border-radius:.25rem"></div>
+            <div class="zoom relative rounded"><img src="{{ SITE.principal_photo.url }}" alt="{{ SITE.principal_name }}" class="w-full object-cover" style="aspect-ratio:4/5"></div>
+        </div>
+        {% endif %}
+        <div class="{% if SITE.principal_photo %}md:col-span-3{% else %}md:col-span-5{% endif %}">
+            <h2 class="h2">A word from our {{ SITE.principal_title|lower }}</h2>
+            <span class="rule"></span>
+            <p class="mt-6 text-lg leading-8 whitespace-pre-line" style="color:#38435A">{{ SITE.principal_message|truncatewords:100 }}</p>
+            <p class="serif mt-6 font-bold" style="color:var(--navy)">{{ SITE.principal_name }}</p>
+            <p class="text-sm" style="color:var(--mute)">{{ SITE.principal_title }}, {{ SCHOOL_NAME }}</p>
+            <a href="{% url 'core:about' %}" class="more inline-block mt-5">About our school</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Why choose us -->
+{% if features %}
+<section class="sec paper">
+    <div class="wrap">
+        <h2 class="h2">Why families choose {{ SCHOOL_NAME }}</h2>
+        <span class="rule"></span>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mt-10">
+            {% for f in features %}
+            <div class="feat">
+                <svg class="w-8 h-8" style="color:var(--gold)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {% if f.icon == 'check' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    {% elif f.icon == 'building' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-4 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    {% elif f.icon == 'book' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    {% elif f.icon == 'users' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    {% else %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>{% endif %}
+                </svg>
+                <h3 class="mt-4 text-lg font-bold" style="color:var(--navy)">{{ f.title }}</h3>
+                <p class="mt-2 leading-relaxed" style="color:var(--mute)">{{ f.description }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Upcoming events -->
+<section class="sec">
+    <div class="wrap grid lg:grid-cols-3 gap-12">
+        <div>
+            <h2 class="h2">Upcoming events</h2>
+            <span class="rule"></span>
+            <p class="mt-5 leading-relaxed" style="color:var(--mute)">Open days, exams, sports and ceremonies. Mark your calendar.</p>
+            <a href="{% url 'core:news_events' %}" class="btn btn-navy mt-6">View all events</a>
+        </div>
+        <div class="lg:col-span-2 space-y-4">
+            {% for e in events %}
+            <div class="card flex">
+                <div class="navy text-center flex-none flex flex-col justify-center" style="width:5.5rem">
+                    <span class="serif text-3xl font-bold leading-none">{{ e.date|date:"j" }}</span>
+                    <span class="text-sm font-semibold mt-1" style="color:var(--gold)">{{ e.date|date:"M Y" }}</span>
+                </div>
+                <div class="p-5 flex-1">
+                    <p class="meta">{{ e.get_event_type_display }}{% if e.is_featured %}, featured{% endif %} &middot; {{ e.date|time:"g:i A" }}{% if e.location %} &middot; {{ e.location }}{% endif %}</p>
+                    <h3 class="mt-1 text-lg font-bold" style="color:var(--navy)">{{ e.title }}</h3>
+                    <p class="mt-1 text-sm leading-relaxed" style="color:var(--mute)">{{ e.description|truncatewords:22 }}</p>
+                </div>
+                {% if e.image %}<div class="zoom hidden sm:block flex-none" style="width:8rem"><img src="{{ e.image.url }}" alt="{{ e.title }}" class="w-full h-full object-cover"></div>{% endif %}
+            </div>
+            {% empty %}
+            <p class="card p-6" style="color:var(--mute)">No upcoming events yet. New events appear here as soon as they are published.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Achievements -->
+{% if achievements %}
+<section class="sec paper">
+    <div class="wrap">
+        <h2 class="h2">Our achievements</h2>
+        <span class="rule"></span>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
+            {% for a in achievements %}
+            <article class="card">
+                {% if a.image %}
+                <div class="zoom"><img src="{{ a.image.url }}" alt="{{ a.title }}" class="w-full object-cover" style="aspect-ratio:16/10"></div>
+                {% else %}
+                <div class="navy flex items-end p-5" style="aspect-ratio:16/10"><span class="serif text-4xl font-bold" style="color:var(--gold)">{% if a.year %}{{ a.year }}{% else %}{{ a.get_category_display }}{% endif %}</span></div>
+                {% endif %}
+                <div class="p-6">
+                    <p class="meta">{{ a.get_category_display }}{% if a.year and a.image %} &middot; {{ a.year }}{% endif %}</p>
+                    <h3 class="mt-1 text-lg font-bold" style="color:var(--navy)">{{ a.title }}</h3>
+                    <p class="mt-2 text-sm leading-relaxed" style="color:var(--mute)">{{ a.description|truncatewords:30 }}</p>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Testimonials -->
+{% if testimonials %}
+<section class="sec navy">
+    <div class="wrap">
+        <h2 class="h2">What our community says</h2>
+        <span class="rule"></span>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
+            {% for t in testimonials %}
+            <figure class="flex flex-col p-7 rounded" style="background:var(--navy2)">
+                <span class="serif text-5xl leading-none" style="color:var(--gold)">&ldquo;</span>
+                <blockquote class="mt-2 leading-relaxed flex-1" style="color:#E4E9F2">{{ t.message|truncatewords:45 }}</blockquote>
+                <figcaption class="mt-6 flex items-center gap-3">
+                    {% if t.photo %}<img src="{{ t.photo.url }}" alt="{{ t.name }}" class="w-11 h-11 rounded-full object-cover" style="border:2px solid var(--gold)">
+                    {% else %}<span class="w-11 h-11 rounded-full flex items-center justify-center font-bold" style="background:var(--gold);color:var(--navy)">{{ t.name|slice:":1" }}</span>{% endif %}
+                    <span><span class="block font-bold">{{ t.name }}</span><span class="block text-sm" style="color:var(--goldsoft)">{{ t.get_role_display }}</span></span>
+                </figcaption>
+            </figure>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Latest news -->
+{% if news %}
+<section class="sec">
+    <div class="wrap">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div><h2 class="h2">Latest news</h2><span class="rule"></span></div>
+            <a href="{% url 'core:news_events' %}" class="more">All news</a>
+        </div>
+        <div class="grid lg:grid-cols-3 gap-8 mt-10">
+            {% for n in news %}
+            {% if forloop.first %}
+            <article class="card lg:col-span-2 lg:row-span-2 flex flex-col">
+                {% if n.image %}<div class="zoom"><img src="{{ n.image.url }}" alt="{{ n.title }}" class="w-full object-cover" style="aspect-ratio:16/9"></div>{% endif %}
+                <div class="p-7">
+                    <p class="meta">{{ n.published_date|date:"j F Y" }}</p>
+                    <h3 class="mt-2 text-2xl font-bold" style="color:var(--navy)">{{ n.title }}</h3>
+                    <p class="mt-3 leading-relaxed" style="color:var(--mute)">{{ n.summary }}</p>
+                </div>
+            </article>
+            {% else %}
+            <article class="card flex">
+                {% if n.image %}<div class="zoom flex-none" style="width:7rem"><img src="{{ n.image.url }}" alt="{{ n.title }}" class="w-full h-full object-cover"></div>{% endif %}
+                <div class="p-5">
+                    <p class="meta">{{ n.published_date|date:"j F Y" }}</p>
+                    <h3 class="mt-1 font-bold" style="color:var(--navy)">{{ n.title }}</h3>
+                    <p class="mt-1 text-sm" style="color:var(--mute)">{{ n.summary|truncatewords:18 }}</p>
+                </div>
+            </article>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Gallery -->
+{% if gallery %}
+<section class="sec paper">
+    <div class="wrap">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div><h2 class="h2">Life at {{ SCHOOL_NAME }}</h2><span class="rule"></span></div>
+            <a href="{% url 'core:gallery' %}" class="more">Full gallery</a>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-10">
+            {% for g in gallery %}
+            <div class="{% if forloop.first %}col-span-2 row-span-2{% else %}aspect-square{% endif %} zoom rounded">
+                <img src="{{ g.image.url }}" alt="{{ g.title }}" class="w-full h-full object-cover">
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Key dates and downloads -->
+{% if key_dates or downloads %}
+<section class="sec">
+    <div class="wrap grid lg:grid-cols-2 gap-12">
+        {% if key_dates %}
+        <div>
+            <h2 class="h2">Key dates</h2><span class="rule"></span>
+            <div class="mt-8 space-y-3">
+                {% for k in key_dates %}
+                <div class="card flex items-center">
+                    <div class="navy text-center flex-none py-3" style="width:4.5rem">
+                        <span class="serif text-2xl font-bold leading-none block">{{ k.date|date:"j" }}</span>
+                        <span class="text-xs font-semibold" style="color:var(--gold)">{{ k.date|date:"M Y" }}</span>
+                    </div>
+                    <div class="px-4 py-3 flex-1">
+                        <h3 class="font-bold" style="color:var(--navy)">{{ k.title }}</h3>
+                        <p class="meta">{% if k.days_left == 0 %}Today{% elif k.days_left == 1 %}Tomorrow{% else %}In {{ k.days_left }} days{% endif %}{% if k.note %} &middot; {{ k.note }}{% endif %}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% if downloads %}
+        <div>
+            <h2 class="h2">Downloads</h2><span class="rule"></span>
+            <div class="mt-8 space-y-3">
+                {% for d in downloads %}
+                <a href="{{ d.file.url }}" download class="card flex items-center gap-4 p-4">
+                    <svg class="w-8 h-8 flex-none" style="color:var(--gold)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span class="flex-1"><h3 class="font-bold" style="color:var(--navy)">{{ d.title }}</h3>{% if d.description %}<span class="block text-sm" style="color:var(--mute)">{{ d.description }}</span>{% endif %}</span>
+                    <span class="more text-sm">Download</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+<!-- FAQ -->
+{% if faqs %}
+<section class="sec paper">
+    <div class="wrap" style="max-width:52rem">
+        <h2 class="h2">Questions parents ask</h2><span class="rule"></span>
+        <div class="mt-8 space-y-3">
+            {% for f in faqs %}
+            <details class="card"><summary>{{ f.question }}</summary><p>{{ f.answer|linebreaksbr }}</p></details>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Admissions -->
+{% if SITE.admissions_open %}
+<section style="background:var(--gold);color:var(--navy)" class="py-14">
+    <div class="wrap text-center" style="max-width:48rem">
+        <h2 class="serif text-3xl font-bold">Admissions are open</h2>
+        {% if SITE.admissions_text %}<p class="mt-3 text-lg">{{ SITE.admissions_text }}</p>{% endif %}
+        <div class="mt-7 flex flex-wrap justify-center gap-3">
+            <a href="{% url 'core:admissions' %}" class="btn btn-navy">Start your application</a>
+            <a href="{% url 'core:contact' %}" class="btn btn-line">Contact us</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Contact -->
+{% if SITE.phone or SITE.email or SITE.address or SITE.whatsapp or SITE.map_embed_url %}
+<section class="sec">
+    <div class="wrap grid lg:grid-cols-2 gap-10">
+        <div>
+            <h2 class="h2">Visit or contact us</h2><span class="rule"></span>
+            <dl class="mt-8 space-y-4" style="color:#38435A">
+                {% if SITE.address %}<div><dt class="meta">Address</dt><dd>{{ SITE.address }}</dd></div>{% endif %}
+                {% if SITE.phone %}<div><dt class="meta">Phone</dt><dd><a href="tel:{{ SITE.phone }}" class="more">{{ SITE.phone }}</a></dd></div>{% endif %}
+                {% if SITE.email %}<div><dt class="meta">Email</dt><dd><a href="mailto:{{ SITE.email }}" class="more">{{ SITE.email }}</a></dd></div>{% endif %}
+                {% if SITE.office_hours %}<div><dt class="meta">Office hours</dt><dd>{{ SITE.office_hours }}</dd></div>{% endif %}
+            </dl>
+            <div class="mt-8 flex flex-wrap gap-3">
+                {% if SITE.whatsapp %}<a href="https://wa.me/{{ SITE.whatsapp }}" target="_blank" rel="noopener" class="btn btn-gold">Chat on WhatsApp</a>{% endif %}
+                {% if SITE.phone %}<a href="tel:{{ SITE.phone }}" class="btn btn-navy">Call the school</a>{% endif %}
+                <a href="{% url 'core:contact' %}" class="btn btn-line" style="color:var(--navy)">Send a message</a>
+            </div>
+            {% if SITE.facebook or SITE.instagram or SITE.youtube %}
+            <p class="mt-6 flex gap-5 text-sm">
+                {% if SITE.facebook %}<a href="{{ SITE.facebook }}" target="_blank" rel="noopener" class="more">Facebook</a>{% endif %}
+                {% if SITE.instagram %}<a href="{{ SITE.instagram }}" target="_blank" rel="noopener" class="more">Instagram</a>{% endif %}
+                {% if SITE.youtube %}<a href="{{ SITE.youtube }}" target="_blank" rel="noopener" class="more">YouTube</a>{% endif %}
+            </p>
+            {% endif %}
+        </div>
+        {% if SITE.map_embed_url %}
+        <iframe src="{{ SITE.map_embed_url }}" title="Map to {{ SCHOOL_NAME }}" class="w-full rounded" style="height:22rem;border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+{% if SITE.whatsapp %}
+<a href="https://wa.me/{{ SITE.whatsapp }}" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp" class="fixed flex items-center justify-center rounded-full shadow-lg" style="right:1.25rem;bottom:1.25rem;z-index:40;width:3.5rem;height:3.5rem;background:#16A34A;color:#fff">
+    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+</a>
+{% endif %}
+
+</div>
+{% endblock %}

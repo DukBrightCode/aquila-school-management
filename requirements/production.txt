@@ -1,0 +1,5 @@
+-r base.txt
+gunicorn>=23,<24
+dj-database-url
+psycopg2-binary
+whitenoise

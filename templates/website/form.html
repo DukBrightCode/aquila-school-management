@@ -1,0 +1,37 @@
+{% extends 'website/_layout.html' %}
+{% block page %}
+<h1 class="text-2xl font-bold text-gray-900">{{ heading }}</h1>
+
+<form method="post" enctype="multipart/form-data" class="space-y-6">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="rounded-md bg-red-50 text-red-800 border border-red-200 px-4 py-3 text-sm">{{ form.non_field_errors }}</div>{% endif %}
+
+    {% for title, fields in sections %}
+    <div class="bg-white rounded-lg shadow border border-gray-200 p-6 space-y-5">
+        {% if title %}<h2 class="text-lg font-semibold text-gray-900">{{ title }}</h2>{% endif %}
+        {% for field in fields %}
+        <div>
+            {% if field.field.widget.input_type == 'checkbox' %}
+            <label class="flex items-start gap-3">
+                {{ field }}
+                <span><span class="text-sm font-medium text-gray-800">{{ field.label }}</span>
+                {% if field.help_text %}<span class="block text-xs text-gray-500">{{ field.help_text }}</span>{% endif %}</span>
+            </label>
+            {% else %}
+            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>{% endif %}
+            {% endif %}
+            {% for e in field.errors %}<p class="mt-1 text-xs text-red-600">{{ e }}</p>{% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+    <div class="flex items-center gap-3">
+        <button type="submit" class="px-6 py-2.5 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">Save</button>
+        {% if back %}<a href="{% url 'website:list' back %}" class="px-4 py-2.5 text-sm text-gray-600 hover:underline">Cancel</a>
+        {% else %}<a href="{% url 'website:home' %}" class="px-4 py-2.5 text-sm text-gray-600 hover:underline">Cancel</a>{% endif %}
+    </div>
+</form>
+{% endblock %}

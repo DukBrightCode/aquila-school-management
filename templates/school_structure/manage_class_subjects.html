@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="md:flex md:items-center md:justify-between mb-6">
+        <div class="flex-1 min-w-0">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                Manage Class Subjects
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                {% if selected_arm %}
+                    Managing subjects for {{ selected_arm.class_level.name }} {{ selected_arm.name }}
+                {% else %}
+                    Select a class to manage its subjects
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Class Selection -->
+    <div class="bg-white shadow rounded-lg mb-6 p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Select Class</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for arm in manageable_arms %}
+                <a href="{% url 'school_structure:manage_class_subjects' arm.id %}"
+                   class="block p-4 border rounded-lg hover:bg-gray-50 {% if selected_arm and selected_arm.id == arm.id %}border-indigo-500 bg-indigo-50{% else %}border-gray-200{% endif %}">
+                    <div class="font-medium text-gray-900">{{ arm.class_level.name }} {{ arm.name }}</div>
+                    <div class="text-sm text-gray-500 mt-1">{{ arm.subjects.count }} subjects assigned</div>
+                </a>
+            {% empty %}
+                <div class="col-span-full text-sm text-gray-500">
+                    No classes assigned to you. Contact administrator for class assignment.
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Subject Management for Selected Class -->
+    {% if selected_arm %}
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    Subjects for {{ selected_arm.class_level.name }} {{ selected_arm.name }}
+                </h3>
+            </div>
+
+            <!-- Add Subject Form -->
+            <div class="p-6 border-b border-gray-200">
+                <form method="post" class="flex items-center gap-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add">
+                    <select name="subject_id" required class="flex-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                        <option value="">-- Select Subject to Add --</option>
+                        {% for subject in all_subjects %}
+                            {% if subject not in selected_arm.subjects.all %}
+                                <option value="{{ subject.id }}">{{ subject.name }} ({{ subject.code }})</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        Add Subject
+                    </button>
+                </form>
+            </div>
+
+            <!-- Assigned Subjects List -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for subject in selected_arm.subjects.all %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ subject.name }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ subject.code }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <form method="post" class="inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="remove">
+                                    <input type="hidden" name="subject_id" value="{{ subject.id }}">
+                                    <button type="submit"
+                                            onclick="return confirm('Are you sure you want to remove {{ subject.name }} from this class?')"
+                                            class="text-red-600 hover:text-red-900">
+                                        Remove
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-6 py-8 text-center text-sm text-gray-500">
+                                No subjects assigned to this class yet. Add subjects using the form above.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

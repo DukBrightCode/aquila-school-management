@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load attendance_extras %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-6 flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-900">Mark Daily Attendance</h1>
+    <a href="{% url 'attendance:summary' %}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">View Attendance Summary &rarr;</a>
+  </div>
+
+  <!-- Filter / Selection Form -->
+  <div class="bg-white p-4 rounded-lg shadow mb-6">
+    <form method="get" action="{% url 'attendance:mark_attendance' %}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label for="class_arm" class="block text-sm font-medium text-gray-700 mb-1">Select Class Arm</label>
+        <select name="class_arm" id="class_arm" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+          <option value="">-- Choose Class Arm --</option>
+          {% for arm in class_arms %}
+            <option value="{{ arm.id }}" {% if selected_arm_id == arm.id %}selected{% endif %}>
+              {{ arm.class_level.name }} - Arm {{ arm.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+        <input type="date" name="date" id="date" value="{{ selected_date }}" required class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+      </div>
+      <div class="flex items-end">
+        <button type="submit" class="w-full bg-gray-800 text-white font-medium py-2 px-4 rounded-md shadow hover:bg-gray-900">Load Roster</button>
+      </div>
+    </form>
+  </div>
+
+  {% if selected_arm %}
+  <!-- Attendance Marking Grid -->
+  <div class="bg-white shadow overflow-hidden sm:rounded-lg p-6">
+    <form id="attendance-submit-form">
+      <input type="hidden" id="class_arm_id" value="{{ selected_arm.id }}">
+      <input type="hidden" id="attendance_date" value="{{ selected_date }}">
+
+      <div class="flex justify-between items-center mb-4 pb-2 border-b">
+        <h2 class="text-lg font-semibold text-gray-800">
+          Roster for {{ selected_arm.class_level.name }} - {{ selected_arm.name }} ({{ selected_date }})
+        </h2>
+        <span class="text-xs text-gray-500">Total Students: {{ students|length }}</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admission No</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
+              <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for student in students %}
+            <tr class="student-attendance-row" data-student-id="{{ student.id }}">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ student.admission_number }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.user.get_full_name|default:student.user.username }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
+                <div class="flex justify-center space-x-6">
+                  <label class="inline-flex items-center text-green-700">
+                    <input type="radio" name="status_{{ student.id }}" value="PRESENT" class="form-radio text-green-600 focus:ring-green-500"
+                           {% if not existing_records or existing_records|get_item:student.id == "PRESENT" or not existing_records|get_item:student.id %}checked{% endif %}>
+                    <span class="ml-2">Present</span>
+                  </label>
+                  <label class="inline-flex items-center text-yellow-700">
+                    <input type="radio" name="status_{{ student.id }}" value="LATE" class="form-radio text-yellow-600 focus:ring-yellow-500"
+                           {% if existing_records|get_item:student.id == "LATE" %}checked{% endif %}>
+                    <span class="ml-2">Late</span>
+                  </label>
+                  <label class="inline-flex items-center text-red-700">
+                    <input type="radio" name="status_{{ student.id }}" value="ABSENT" class="form-radio text-red-600 focus:ring-red-500"
+                           {% if existing_records|get_item:student.id == "ABSENT" %}checked{% endif %}>
+                    <span class="ml-2">Absent</span>
+                  </label>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">No students enrolled in this class arm.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if students %}
+      <div class="mt-6 flex justify-end">
+        <button type="submit" id="save-attendance-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md shadow-sm">
+          Save Attendance
+        </button>
+      </div>
+      {% endif %}
+    </form>
+
+    <div id="response-message" class="hidden"></div>
+  </div>
+  {% endif %}
+</div>
+
+<script src="{% static 'src/js/utils/api.js' %}"></script>
+<script src="{% static 'src/js/attendance.js' %}"></script>
+{% endblock %}

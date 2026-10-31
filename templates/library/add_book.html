@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-xl mx-auto bg-white shadow rounded-lg p-6 my-8">
+  <h1 class="text-2xl font-bold text-gray-900 mb-6">Add New Book to Inventory</h1>
+  
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    {{ form.as_p }}
+    
+    <div class="flex items-center justify-end gap-3 mt-6">
+      <a href="{% url 'library:book_list' %}" class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+        Cancel
+      </a>
+      <button type="submit" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm">
+        Save Book
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

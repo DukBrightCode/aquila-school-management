@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+  <div class="bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-xl font-bold text-gray-900 mb-6">{% if form.instance.pk %}Edit Student{% else %}Add Student{% endif %}</h2>
+    <form method="post" enctype="multipart/form-data" class="space-y-4">
+      {% csrf_token %}
+      {% for field in form %}
+      <div>
+        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <div class="flex justify-end space-x-3 mt-6">
+        <a href="{% url 'students:list' %}" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md">Cancel</a>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save Student</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

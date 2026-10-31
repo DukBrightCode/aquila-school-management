@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mx-auto max-w-7xl p-4">
+  <h1 class="mb-3 text-xl font-bold">Skills &amp; Behaviour</h1>
+
+  <!-- Step 1: pick class and term -->
+  <form method="get" class="mb-4 flex flex-wrap items-end gap-3 rounded border bg-white p-3">
+    <div>
+      <label class="block text-sm font-medium">Class</label>
+      <select name="class_arm" class="rounded border px-2 py-1 text-sm" required>
+        <option value="">Select class</option>
+        {% for a in class_arms %}
+          <option value="{{ a.id }}" {% if a.id|stringformat:"s" == sel_arm %}selected{% endif %}>{{ a.class_level.name }} {{ a.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium">Term</label>
+      <select name="term" class="rounded border px-2 py-1 text-sm" required>
+        <option value="">Select term</option>
+        {% for t in terms %}
+          <option value="{{ t.id }}" {% if t.id|stringformat:"s" == sel_term %}selected{% endif %}>{{ t.name }} ({{ t.session.name }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="rounded bg-blue-600 px-4 py-1.5 text-sm text-white">Load students</button>
+  </form>
+
+  {% if sel_arm and sel_term %}
+  <!-- Step 2: add skills + rate students (posts back to the same URL, query string kept) -->
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="mb-4 flex flex-wrap items-end gap-2 rounded border bg-white p-3">
+      <div>
+        <label class="block text-sm font-medium">Add a new skill/behaviour to the list</label>
+        <input type="text" name="new_skill" maxlength="100" placeholder="e.g. Teamwork"
+               class="w-64 rounded border px-2 py-1 text-sm">
+      </div>
+      <p class="text-xs text-gray-500">It is added when you press Save, and becomes available to every class.</p>
+    </div>
+
+    <div class="overflow-x-auto rounded border bg-white">
+      <table class="w-full text-sm">
+        <thead class="bg-blue-600 text-white">
+          <tr>
+            <th class="px-3 py-2 text-left">Student</th>
+            {% for s in skills %}<th class="px-2 py-2 text-xs">{{ s.name }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr class="border-t">
+            <td class="whitespace-nowrap px-3 py-1.5">{{ row.student.full_name }}</td>
+            {% for c in row.cells %}
+            <td class="px-1 py-1 text-center">
+              <select name="r_{{ row.student.id }}_{{ c.skill.id }}" class="rounded border px-1 py-0.5">
+                <option value="">-</option>
+                {% for n in "54321" %}
+                  <option value="{{ n }}" {% if c.value|stringformat:"s" == n %}selected{% endif %}>{{ n }}</option>
+                {% endfor %}
+              </select>
+            </td>
+            {% endfor %}
+          </tr>
+          {% empty %}
+          <tr><td class="p-4 text-center text-gray-500">No students in this class.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <button type="submit" class="mt-4 rounded bg-blue-600 px-4 py-2 text-white">Save</button>
+    <p class="mt-2 text-xs text-gray-500">5 - Excellent, 4 - Very Good, 3 - Good, 2 - Fair, 1 - Poor</p>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}
