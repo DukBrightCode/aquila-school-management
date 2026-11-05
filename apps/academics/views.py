@@ -169,6 +169,11 @@ def score_entry_data(request):
         "scores": scores_dict,
     })
 
+import json
+from django.db import transaction
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+# (Keep your existing imports for decorators, models, and helper functions)
 
 @role_required("TEACHER", "ADMIN")
 @require_POST
@@ -207,11 +212,31 @@ def score_entry_save(request):
     if teacher and not scoreable_subjects(teacher, class_arm).filter(id=subject_id).exists():
         return JsonResponse({"error": "You are not authorized to enter scores for this subject."}, status=403)
 
+    student_ids = [row.get("student_id") for row in rows if row.get("student_id")]
+    if not student_ids:
+        return JsonResponse({"saved": 0})
+
+    # 1. Fetch all existing scores for these students in ONE single query
+    existing_scores_map = {
+        (s.student_id, s.assessment_type_id): s
+        for s in Score.objects.filter(
+            subject_id=subject_id,
+            term_id=term_id,
+            exam_type=exam_type,
+            student_id__in=student_ids
+        )
+    }
+
+    to_create = []
+    to_update = []
     saved_count = 0
 
     for row in rows:
         student_id = row.get("student_id")
         scores = row.get("scores", {})  # Dict of {assessment_type_id: score_value}
+
+        if not student_id:
+            continue
 
         for at_id_str, val in scores.items():
             if val is None or val == "":
@@ -223,26 +248,39 @@ def score_entry_save(request):
             except ValueError:
                 continue
 
-            score_obj, created = Score.objects.get_or_create(
-                student_id=student_id,
-                subject_id=subject_id,
-                term_id=term_id,
-                assessment_type_id=at_id,
-                exam_type=exam_type,
-                defaults={
-                    "class_arm_id": class_arm_id,
-                    "score_value": score_val,
-                    "entered_by": teacher,
-                }
-            )
-
-            if not created:
+            key = (student_id, at_id)
+            if key in existing_scores_map:
+                # Update existing object in memory
+                score_obj = existing_scores_map[key]
                 score_obj.score_value = score_val
                 score_obj.class_arm_id = class_arm_id
                 score_obj.entered_by = teacher
-                score_obj.save()
-
+                to_update.append(score_obj)
+            else:
+                # Instantiate new object for bulk creation
+                to_create.append(
+                    Score(
+                        student_id=student_id,
+                        subject_id=subject_id,
+                        term_id=term_id,
+                        assessment_type_id=at_id,
+                        exam_type=exam_type,
+                        class_arm_id=class_arm_id,
+                        score_value=score_val,
+                        entered_by=teacher,
+                    )
+                )
             saved_count += 1
+
+    # 2. Execute database writes in a single memory-efficient atomic batch
+    with transaction.atomic():
+        if to_create:
+            Score.objects.bulk_create(to_create)
+        if to_update:
+            Score.objects.bulk_update(
+                to_update, 
+                ["score_value", "class_arm_id", "entered_by"]
+            )
 
     return JsonResponse({"saved": saved_count})
 
