@@ -1,9 +1,12 @@
-from apps.academics.models import ResultRelease
+from django.db.models import Q
+
+from apps.academics.models import ClassSubjectTeacher, ResultRelease
 from apps.school_structure.models import ClassArm, Subject
+
 
 def scoreable_arms(teacher):
     """
-    Returns the class arms where the teacher is one of the class teachers.
+    Returns the class arms where the teacher is the class teacher.
     """
     return ClassArm.objects.filter(class_teachers=teacher).select_related("class_level")
 
@@ -17,12 +20,32 @@ def offered_subjects(arm):
 
 def scoreable_subjects(teacher, arm):
     """
-    Returns the subjects a teacher can enter scores for in a given arm.
-    Only if the teacher is the class teacher of that arm.
+    Subjects this teacher may enter scores for in a given arm.
+      - a class teacher of the arm: every subject the arm offers
+      - an assigned subject teacher: only the subjects assigned to them in that arm
     """
     if arm.class_teachers.filter(pk=teacher.pk).exists():
         return offered_subjects(arm)
-    return Subject.objects.none()
+    assigned = ClassSubjectTeacher.objects.filter(
+        class_arm=arm, teacher=teacher
+    ).values_list("subject_id", flat=True)
+    return arm.subjects.filter(pk__in=assigned)
+
+
+def score_entry_arms(teacher):
+    """
+    Arms where this teacher may enter scores: the arms they lead as class teacher,
+    plus every arm where they are the assigned subject teacher for something.
+    (Only used for score entry. Students, remarks, skills and reports stay with
+    scoreable_arms, i.e. class teachers only.)
+    """
+    return (
+        ClassArm.objects.filter(
+            Q(class_teachers=teacher) | Q(subject_teachers__teacher=teacher)
+        )
+        .select_related("class_level")
+        .distinct()
+    )
 
 
 # ---- Result access (report cards) ---------------------------------------------

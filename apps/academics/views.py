@@ -3,6 +3,8 @@ from io import BytesIO
 import json
 import logging
 import os
+
+from decimal import Decimal, InvalidOperation
 from django.conf import settings
 from django.db import transaction
 from django.urls import reverse
@@ -36,7 +38,9 @@ from apps.academics.permissions import (
     result_access_error,
     scoreable_arms,
     is_admin,
-    scoreable_arms                                       
+    score_entry_arms,
+    offered_subjects,
+    scoreable_subjects,                               
 )
 from utils.pdf_generator import render_html_to_pdf, pdf_file_response
 
@@ -47,22 +51,57 @@ logger = logging.getLogger(__name__)
 # STAGE 6B VIEWS
 # ----------------------------------------------------------------------
 
+EXAM_TYPES = ("MID_TERM", "FULL_TERM")
+ 
+ 
+def _score_entry_access(user, class_arm_id, subject_id=None):
+    """
+    Returns (teacher, class_arm, error). `error` is a JsonResponse when access is refused,
+    otherwise None. `teacher` is None for admins.
+    """
+    if not str(class_arm_id).isdigit():
+        return None, None, JsonResponse({"error": "Invalid class."}, status=400)
+    class_arm = ClassArm.objects.filter(id=class_arm_id).first()
+    if class_arm is None:
+        return None, None, JsonResponse({"error": "Class not found."}, status=404)
+ 
+    teacher = None
+    if not is_admin(user):
+        teacher = getattr(user, "teacher_profile", None)
+        if not teacher or not score_entry_arms(teacher).filter(id=class_arm.id).exists():
+            return teacher, class_arm, JsonResponse(
+                {"error": "Permission denied. You are not assigned to this class."}, status=403
+            )
+ 
+    if subject_id is not None:
+        if not str(subject_id).isdigit():
+            return teacher, class_arm, JsonResponse({"error": "Invalid subject."}, status=400)
+        if not offered_subjects(class_arm).filter(id=subject_id).exists():
+            return teacher, class_arm, JsonResponse(
+                {"error": "This subject is not offered for this class."}, status=403
+            )
+        if teacher and not scoreable_subjects(teacher, class_arm).filter(id=subject_id).exists():
+            return teacher, class_arm, JsonResponse(
+                {"error": "You are not authorized to enter scores for this subject."}, status=403
+            )
+ 
+    return teacher, class_arm, None
+ 
+
 @role_required("TEACHER", "ADMIN")
 @require_GET
 def score_entry(request):
     """
-    Renders the interactive Score Entry application shell with filter dropdowns.
-    Teachers are restricted to classes where they are the class teacher.
-    Subjects are filtered based on the selected class arm.
+    Score Entry page shell with filter dropdowns.
+    Teachers see the classes they lead plus the classes where they are an assigned subject teacher.
     """
     user = request.user
-    if user.is_superuser or user.role == "ADMIN":
+    if is_admin(user):
         class_arms = ClassArm.objects.all().order_by("name")
     else:
         teacher = getattr(user, "teacher_profile", None)
-        class_arms = scoreable_arms(teacher) if teacher else ClassArm.objects.none()
-
-    # Get all subjects initially (will be filtered dynamically in frontend based on class selection)
+        class_arms = score_entry_arms(teacher) if teacher else ClassArm.objects.none()
+ 
     context = {
         "class_arms": class_arms,
         "subjects": Subject.objects.all().order_by("name"),
@@ -75,220 +114,197 @@ def score_entry(request):
 @require_GET
 def get_class_subjects(request):
     """
-    JSON API providing subjects filtered by class arm.
-    Used to dynamically update subject dropdown when class is selected.
+    JSON API: the subjects this user may enter scores for in the selected class.
+    Class teachers and admins get every subject the class offers; a subject teacher
+    gets only the subjects assigned to them.
     """
     class_arm_id = request.GET.get("class_arm")
-
     if not class_arm_id:
         return JsonResponse({"error": "Missing class_arm parameter."}, status=400)
-
-    # Permission check: Teachers can only access classes where they are the class teacher
-    user = request.user
-    if not (user.is_superuser or user.role == "ADMIN"):
-        teacher = getattr(user, "teacher_profile", None)
-        if not teacher or not scoreable_arms(teacher).filter(id=class_arm_id).exists():
-            return JsonResponse({"error": "Permission denied. You are not the class teacher for this class."}, status=403)
-
-    class_arm = get_object_or_404(ClassArm, id=class_arm_id)
-    subjects = offered_subjects(class_arm).order_by("name")
-
-    subjects_list = [
-        {"id": sub.id, "name": sub.name, "code": sub.code}
-        for sub in subjects
-    ]
-
-    return JsonResponse({"subjects": subjects_list})
+ 
+    teacher, class_arm, error = _score_entry_access(request.user, class_arm_id)
+    if error:
+        return error
+ 
+    subjects = scoreable_subjects(teacher, class_arm) if teacher else offered_subjects(class_arm)
+    return JsonResponse({
+        "subjects": [
+            {"id": s.id, "name": s.name, "code": s.code}
+            for s in subjects.order_by("name")
+        ]
+    })
 
 
 @role_required("TEACHER", "ADMIN")
 @require_GET
 def score_entry_data(request):
     """
-    JSON API providing dynamic assessment columns, student roster, and entered raw scores.
+    JSON API: assessment columns, student roster and entered raw scores.
     """
     class_arm_id = request.GET.get("class_arm")
     subject_id = request.GET.get("subject")
     term_id = request.GET.get("term")
     exam_type = request.GET.get("exam_type", "FULL_TERM")
-
+ 
     if not all([class_arm_id, subject_id, term_id]):
         return JsonResponse({"error": "Missing required filter parameters."}, status=400)
-
-    # Permission check: Teachers can only access classes where they are the class teacher
-    user = request.user
-    teacher = None
-    if not (user.is_superuser or user.role == "ADMIN"):
-        teacher = getattr(user, "teacher_profile", None)
-        if not teacher or not scoreable_arms(teacher).filter(id=class_arm_id).exists():
-            return JsonResponse({"error": "Permission denied. You are not the class teacher for this class."}, status=403)
-
-    # Additional permission check: Subject must be offered for this class
-    class_arm = get_object_or_404(ClassArm, id=class_arm_id)
-    if not offered_subjects(class_arm).filter(id=subject_id).exists():
-        return JsonResponse({"error": "This subject is not offered for this class."}, status=403)
-
-    # For teachers, check if subject is scoreable
-    if teacher and not scoreable_subjects(teacher, class_arm).filter(id=subject_id).exists():
-        return JsonResponse({"error": "You are not authorized to enter scores for this subject."}, status=403)
-
-    # 1. Fetch Active Assessment Types configured for the selected Term
+    if not str(term_id).isdigit() or exam_type not in EXAM_TYPES:
+        return JsonResponse({"error": "Invalid term or exam type."}, status=400)
+ 
+    teacher, class_arm, error = _score_entry_access(request.user, class_arm_id, subject_id)
+    if error:
+        return error
+ 
+    # Only the columns that belong to the chosen exam type for this term
     assessment_types = list(
-        AssessmentType.objects.filter(term_id=term_id, is_active=True)
+        AssessmentType.objects.filter(term_id=term_id, is_active=True, exam_type=exam_type)
         .order_by("id")
         .values("id", "name", "max_score", "weight_percentage")
     )
-
-    # Convert Decimal values to float for clean JSON serialization
     for at in assessment_types:
         at["max_score"] = float(at["max_score"])
         at["weight_percentage"] = float(at["weight_percentage"])
-
-    # 2. Fetch Students enrolled in the given Class Arm
-    students_qs = Student.objects.filter(current_class_arm_id=class_arm_id).order_by("last_name", "first_name")
+ 
+    students_qs = Student.objects.filter(current_class_arm_id=class_arm.id).order_by("last_name", "first_name")
     students = [
-        {
-            "id": st.id,
-            "admission_number": st.admission_number,
-            "full_name": st.full_name,
-        }
+        {"id": st.id, "admission_number": st.admission_number, "full_name": st.full_name}
         for st in students_qs
     ]
-
-    # 3. Retrieve all existing score records keyed as "{student_id}-{assessment_type_id}"
+ 
     scores_qs = Score.objects.filter(
         subject_id=subject_id,
         term_id=term_id,
-        class_arm_id=class_arm_id,
+        class_arm_id=class_arm.id,
         exam_type=exam_type,
-        assessment_type__is_active=True
+        assessment_type__is_active=True,
+        assessment_type__exam_type=exam_type,
     ).values("student_id", "assessment_type_id", "score_value")
-
+ 
     scores_dict = {
         f"{sc['student_id']}-{sc['assessment_type_id']}": float(sc["score_value"])
         for sc in scores_qs
     }
-
+ 
     return JsonResponse({
         "assessment_types": assessment_types,
         "students": students,
         "scores": scores_dict,
     })
 
-import json
-from django.db import transaction
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-# (Keep your existing imports for decorators, models, and helper functions)
-
 @role_required("TEACHER", "ADMIN")
 @require_POST
 def score_entry_save(request):
     """
-    Bulk upserts raw scores entered by a teacher for a class, subject, and term.
+    Bulk upserts raw scores for a class, subject, term and exam type.
+    Everything is validated first; if anything is invalid, nothing is saved.
     """
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON payload."}, status=400)
-
+ 
     subject_id = data.get("subject_id")
     term_id = data.get("term_id")
     class_arm_id = data.get("class_arm_id")
     exam_type = data.get("exam_type", "FULL_TERM")
     rows = data.get("rows", [])
-
+ 
     if not all([subject_id, term_id, class_arm_id]):
         return JsonResponse({"error": "Missing subject_id, term_id, or class_arm_id."}, status=400)
-
-    # Permission check: Teachers can only save scores for classes where they are the class teacher
-    user = request.user
-    teacher = None
-    if not (user.is_superuser or user.role == "ADMIN"):
-        teacher = getattr(user, "teacher_profile", None)
-        if not teacher or not scoreable_arms(teacher).filter(id=class_arm_id).exists():
-            return JsonResponse({"error": "Permission denied. You are not the class teacher for this class."}, status=403)
-
-    # Additional permission check: Subject must be offered for this class
-    class_arm = get_object_or_404(ClassArm, id=class_arm_id)
-    if not offered_subjects(class_arm).filter(id=subject_id).exists():
-        return JsonResponse({"error": "This subject is not offered for this class."}, status=403)
-
-    # For teachers, check if subject is scoreable
-    if teacher and not scoreable_subjects(teacher, class_arm).filter(id=subject_id).exists():
-        return JsonResponse({"error": "You are not authorized to enter scores for this subject."}, status=403)
-
-    student_ids = [row.get("student_id") for row in rows if row.get("student_id")]
-    if not student_ids:
+    if not str(term_id).isdigit() or exam_type not in EXAM_TYPES or not isinstance(rows, list):
+        return JsonResponse({"error": "Invalid term, exam type or rows."}, status=400)
+ 
+    teacher, class_arm, error = _score_entry_access(request.user, class_arm_id, subject_id)
+    if error:
+        return error
+ 
+    # What this save is allowed to touch
+    components = {
+        c.id: c
+        for c in AssessmentType.objects.filter(term_id=term_id, is_active=True, exam_type=exam_type)
+    }
+    class_student_ids = set(
+        Student.objects.filter(current_class_arm_id=class_arm.id).values_list("id", flat=True)
+    )
+ 
+    # ---- validate everything before writing anything -------------------------
+    parsed = []          # (student_id, assessment_type_id, Decimal value)
+    errors = set()
+    for row in rows:
+        if not isinstance(row, dict) or not row.get("student_id"):
+            continue
+        try:
+            student_id = int(row["student_id"])
+        except (TypeError, ValueError):
+            errors.add("Invalid student.")
+            continue
+        if student_id not in class_student_ids:
+            errors.add("A student in the list is not in this class. Please reload the page.")
+            continue
+ 
+        scores = row.get("scores") or {}
+        if not isinstance(scores, dict):
+            errors.add("Invalid scores.")
+            continue
+        for at_id_str, val in scores.items():
+            if val is None or str(val).strip() == "":
+                continue
+            try:
+                at_id = int(at_id_str)
+                score_val = Decimal(str(val).strip())
+            except (ValueError, InvalidOperation):
+                errors.add("Scores must be numbers.")
+                continue
+            component = components.get(at_id)
+            if component is None:
+                errors.add("A score column is not valid for this term and exam type. Please reload the page.")
+                continue
+            if not score_val.is_finite() or score_val < 0 or score_val > component.max_score:
+                errors.add(f"{component.name} must be between 0 and {component.max_score:g}.")
+                continue
+            parsed.append((student_id, at_id, score_val.quantize(Decimal("0.01"))))
+ 
+    if errors:
+        return JsonResponse({"error": " ".join(sorted(errors)), "saved": 0}, status=400)
+    if not parsed:
         return JsonResponse({"saved": 0})
-
-    # 1. Fetch all existing scores for these students in ONE single query
-    existing_scores_map = {
+ 
+    # ---- one query for existing scores, then one atomic write ----------------
+    student_ids = {p[0] for p in parsed}
+    existing = {
         (s.student_id, s.assessment_type_id): s
         for s in Score.objects.filter(
-            subject_id=subject_id,
-            term_id=term_id,
-            exam_type=exam_type,
-            student_id__in=student_ids
+            subject_id=subject_id, term_id=term_id, exam_type=exam_type, student_id__in=student_ids
         )
     }
-
-    to_create = []
-    to_update = []
-    saved_count = 0
-
-    for row in rows:
-        student_id = row.get("student_id")
-        scores = row.get("scores", {})  # Dict of {assessment_type_id: score_value}
-
-        if not student_id:
-            continue
-
-        for at_id_str, val in scores.items():
-            if val is None or val == "":
-                continue
-
-            try:
-                score_val = float(val)
-                at_id = int(at_id_str)
-            except ValueError:
-                continue
-
-            key = (student_id, at_id)
-            if key in existing_scores_map:
-                # Update existing object in memory
-                score_obj = existing_scores_map[key]
-                score_obj.score_value = score_val
-                score_obj.class_arm_id = class_arm_id
-                score_obj.entered_by = teacher
-                to_update.append(score_obj)
-            else:
-                # Instantiate new object for bulk creation
-                to_create.append(
-                    Score(
-                        student_id=student_id,
-                        subject_id=subject_id,
-                        term_id=term_id,
-                        assessment_type_id=at_id,
-                        exam_type=exam_type,
-                        class_arm_id=class_arm_id,
-                        score_value=score_val,
-                        entered_by=teacher,
-                    )
-                )
-            saved_count += 1
-
-    # 2. Execute database writes in a single memory-efficient atomic batch
+ 
+    to_create, to_update = [], []
+    for student_id, at_id, value in parsed:
+        score_obj = existing.get((student_id, at_id))
+        if score_obj:
+            score_obj.score_value = value
+            score_obj.class_arm_id = class_arm.id
+            score_obj.entered_by = teacher
+            to_update.append(score_obj)
+        else:
+            to_create.append(Score(
+                student_id=student_id,
+                subject_id=subject_id,
+                term_id=term_id,
+                assessment_type_id=at_id,
+                exam_type=exam_type,
+                class_arm_id=class_arm.id,
+                score_value=value,
+                entered_by=teacher,
+            ))
+ 
     with transaction.atomic():
         if to_create:
             Score.objects.bulk_create(to_create)
         if to_update:
-            Score.objects.bulk_update(
-                to_update, 
-                ["score_value", "class_arm_id", "entered_by"]
-            )
-
-    return JsonResponse({"saved": saved_count})
+            Score.objects.bulk_update(to_update, ["score_value", "class_arm_id", "entered_by"])
+ 
+    return JsonResponse({"saved": len(parsed)})
 
 @role_required("TEACHER", "ADMIN")
 def rate_skills(request):

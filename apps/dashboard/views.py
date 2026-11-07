@@ -525,34 +525,57 @@ def teacher_student_edit(request, pk):
 
 @role_required("TEACHER")
 def teacher_class_subjects(request, arm_id):
-    """Class teacher ticks the subjects the class offers and types each subject's teacher."""
+    """
+    Class teacher ticks the subjects the class offers and picks each subject's teacher.
+    A teacher picked here can enter scores for that subject in this class (and nothing else).
+    """
     arm = get_object_or_404(_class_teacher_arms(request.user), pk=arm_id)
-
+ 
+    teachers = list(
+        Teacher.objects.select_related("user")
+        .order_by("user__first_name", "user__last_name", "user__username")
+    )
+    teacher_by_id = {str(t.id): t for t in teachers}
+ 
     if request.method == "POST":
         selected = Subject.objects.filter(pk__in=request.POST.getlist("subjects"))
         arm.subjects.set(selected)
+ 
         for subject in selected:
-            name = request.POST.get(f"teacher_{subject.pk}", "").strip()
+            teacher = teacher_by_id.get(request.POST.get(f"teacher_{subject.pk}", "").strip())
+            typed = request.POST.get(f"name_{subject.pk}", "").strip()
             ClassSubjectTeacher.objects.update_or_create(
-                class_arm=arm, subject=subject, defaults={"teacher_name": name}
+                class_arm=arm,
+                subject=subject,
+                defaults={
+                    "teacher": teacher,
+                    "teacher_name": "" if teacher else typed,   # typed name only if no account picked
+                },
             )
+ 
+        # a subject taken off the class loses its assignment (and the teacher's access)
+        ClassSubjectTeacher.objects.filter(class_arm=arm).exclude(subject__in=selected).delete()
+ 
         messages.success(request, f"Subjects for {arm} saved ({selected.count()} selected).")
         return redirect("dashboard:teacher_student_list")
-
+ 
     selected_ids = set(arm.subjects.values_list("pk", flat=True))
-    names = {
-        a.subject_id: a.display_name
-        for a in ClassSubjectTeacher.objects.filter(class_arm=arm).select_related("teacher__user")
-    }
-    rows = [
-        {
+    assignments = {a.subject_id: a for a in ClassSubjectTeacher.objects.filter(class_arm=arm)}
+    rows = []
+    for s in Subject.objects.all():
+        a = assignments.get(s.pk)
+        rows.append({
             "subject": s,
             "checked": s.pk in selected_ids,
-            "teacher_name": names.get(s.pk, ""),
-        }
-        for s in Subject.objects.all()
-    ]
-    return render(request, "dashboard/teacher/class_subjects.html", {"arm": arm, "rows": rows})
+            "teacher_id": a.teacher_id if a else None,
+            "typed_name": a.teacher_name if a else "",
+        })
+ 
+    return render(request, "dashboard/teacher/class_subjects.html", {
+        "arm": arm,
+        "rows": rows,
+        "teachers": teachers,
+    })
 
 def _class_teacher_arms(user):
     """Arms where this user is one of the class teachers."""
