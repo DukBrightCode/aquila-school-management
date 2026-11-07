@@ -16,21 +16,27 @@ from django.template.loader import render_to_string
 from django.core.mail import EmailMessage
 from django.utils.text import slugify
 from django.utils import timezone
+from django.db.models import Avg
 
 
 from .models import StudentReportRemark, PredefinedRemark, Skill, StudentSkillRating
 from .permissions import scoreable_arms, offered_subjects, scoreable_subjects
-from django.db.models import Avg
+
+
+
 from apps.accounts.permissions import role_required
 from apps.school_structure.models import ClassArm, Subject, Term
 from apps.students.models import Student
-from apps.academics.models import AssessmentType, Score, ResultRelease, Skill, StudentSkillRating 
+from apps.academics.models import AssessmentType, Score, ResultRelease, Skill, StudentSkillRating, PredefinedRemark, StudentReportRemark
 from apps.academics.services.result_mailer import build_report_card_context, send_result_email
+
 from apps.academics.permissions import (
     class_access_error,
     is_admin,
     result_access_error,
-    scoreable_arms,                                       
+    scoreable_arms,
+    is_admin,
+    scoreable_arms                                       
 )
 from utils.pdf_generator import render_html_to_pdf, pdf_file_response
 
@@ -546,54 +552,6 @@ def class_results_summary(request, class_arm_id: int, term_id: int):
 
 
 
-def report_card_view(request, student_id, term_id):
-    student = get_object_or_404(Student, pk=student_id)
-    term = get_object_or_404(Term, pk=term_id)
-    
-    # 1. Fetch remarks & signatures entered for this term
-    report_remark = StudentReportRemark.objects.filter(student=student, term=term).first()
-    
-    # 2. Fetch academic results for the student and term
-    results = AssessmentResult.objects.filter(
-        student=student, 
-        term=term
-    ).select_related('subject')
-    
-    results_table = []
-    total_scores = []
-
-    for res in results:
-        results_table.append({
-            'subject': res.subject.name,
-            'ca1': res.ca1,
-            'ca2': res.ca2,
-            'exam': res.exam,
-            'total_score': res.total_score,
-            'grade_letter': res.grade_letter,
-            'remark': res.remark,
-        })
-        if res.total_score is not None:
-            total_scores.append(res.total_score)
-
-    # 3. Calculate overall average percentage
-    overall_average = round(sum(total_scores) / len(total_scores), 2) if total_scores else 0.00
-
-    context = {
-        'student': student,
-        'term': term,
-        'report_remark': report_remark,
-        'results_table': results_table,
-        'overall_average': overall_average,
-        
-        # Date & School Meta Data
-        'today_date': timezone.now().date(),
-        'school_name': 'Aquila British International School',
-        'school_motto': 'Scientia Omnia Vincit',
-        'logo_url': request.build_absolute_uri('/static/src/images/logo.jpg'),
-    }
-    
-    return render(request, 'academics/report_card.html', context)
-
 
 @login_required
 @role_required("TEACHER", "ADMIN")
@@ -851,4 +809,147 @@ def class_skill_ratings(request):
         "skills": skills,
         "rows": rows,
         "scale": SKILL_SCALE,
+    })
+    
+    
+
+KEEP = "keep"   # form value meaning "leave the current remark as it is"
+@role_required("TEACHER", "ADMIN")
+def class_remarks(request):
+    """
+    One page for a whole class: for every student, the class teacher's remark and the
+    principal's remark, each chosen from the admin's ready-made list.
+    Class teachers can only do this for the classes they lead.
+    Remarks belong to the term, so they show on both the Mid Term and Full Term report.
+    """
+    user = request.user
+    if is_admin(user):
+        arms = ClassArm.objects.select_related("class_level")
+    else:
+        teacher = getattr(user, "teacher_profile", None)
+        arms = scoreable_arms(teacher) if teacher else ClassArm.objects.none()
+ 
+    terms = Term.objects.select_related("session").order_by("-is_current", "-id")
+ 
+    data = request.POST if request.method == "POST" else request.GET
+    arm_param = data.get("arm", "")
+    term_param = data.get("term", "")
+ 
+    arm = arms.filter(pk=arm_param).first() if arm_param.isdigit() else None
+    if arm is None and not arm_param and arms.count() == 1:
+        arm = arms.first()
+ 
+    term = terms.filter(pk=term_param).first() if term_param.isdigit() else None
+    term = term or terms.filter(is_current=True).first() or terms.first()
+ 
+    # The only allowed choices: what the admin put in Predefined remarks.
+    teacher_options = list(PredefinedRemark.objects.filter(type="TEACHER").order_by("text"))
+    principal_options = list(PredefinedRemark.objects.filter(type="PRINCIPAL").order_by("text"))
+    teacher_by_id = {str(p.id): p.text for p in teacher_options}
+    principal_by_id = {str(p.id): p.text for p in principal_options}
+ 
+    students = []
+    if arm:
+        students = list(
+            Student.objects.filter(current_class_arm=arm).order_by("last_name", "first_name")
+        )
+ 
+    existing = {}
+    if students and term:
+        existing = {
+            r.student_id: r
+            for r in StudentReportRemark.objects.filter(student__in=students, term=term)
+        }
+ 
+    def resolve(raw, allowed, current_text):
+        """Returns (new_text, ok). KEEP leaves it as is, '' clears it, an id must be in `allowed`."""
+        raw = (raw or "").strip()
+        if raw == KEEP:
+            return current_text, True
+        if raw == "":
+            return None, True
+        if raw in allowed:
+            return allowed[raw], True
+        return current_text, False        # not one of the admin's remarks: ignored
+ 
+    # ---------------------------------------------------------------- save
+    if request.method == "POST":
+        if not (arm and term):
+            messages.error(request, "Please choose a class and a term.")
+            return redirect("academics:class_remarks")
+ 
+        to_create, to_update = [], []
+        rejected = 0
+        for s in students:
+            teacher_key, principal_key = f"t_{s.id}", f"p_{s.id}"
+            if teacher_key not in request.POST and principal_key not in request.POST:
+                continue                      # fields not on the page: leave as they are
+ 
+            current = existing.get(s.id)
+            cur_teacher = current.teacher_remark if current else None
+            cur_principal = current.principal_remark if current else None
+            new_teacher, new_principal = cur_teacher, cur_principal
+ 
+            if teacher_key in request.POST:
+                new_teacher, ok = resolve(request.POST[teacher_key], teacher_by_id, cur_teacher)
+                rejected += 0 if ok else 1
+            if principal_key in request.POST:
+                new_principal, ok = resolve(request.POST[principal_key], principal_by_id, cur_principal)
+                rejected += 0 if ok else 1
+ 
+            if current:
+                if (cur_teacher, cur_principal) != (new_teacher, new_principal):
+                    current.teacher_remark = new_teacher
+                    current.principal_remark = new_principal
+                    to_update.append(current)
+            elif new_teacher or new_principal:
+                to_create.append(StudentReportRemark(
+                    student=s, term=term,
+                    teacher_remark=new_teacher, principal_remark=new_principal,
+                ))
+ 
+        with transaction.atomic():
+            if to_create:
+                StudentReportRemark.objects.bulk_create(to_create)
+            if to_update:
+                StudentReportRemark.objects.bulk_update(to_update, ["teacher_remark", "principal_remark"])
+ 
+        messages.success(request, f"Remarks saved for {arm}.")
+        if rejected:
+            messages.warning(request, f"{rejected} choice(s) were ignored because they are not in the approved list.")
+        return redirect(f"{reverse('academics:class_remarks')}?arm={arm.id}&term={term.id}")
+ 
+    # ---------------------------------------------------------------- show
+    teacher_id_by_text = {text: pid for pid, text in teacher_by_id.items()}
+    principal_id_by_text = {text: pid for pid, text in principal_by_id.items()}
+ 
+    def selected_value(current_text, id_by_text):
+        if not current_text:
+            return ""
+        return id_by_text.get(current_text, KEEP)   # custom text from the admin: shown, kept
+ 
+    rows = []
+    for s in students:
+        r = existing.get(s.id)
+        t_text = r.teacher_remark if r else None
+        p_text = r.principal_remark if r else None
+        t_sel = selected_value(t_text, teacher_id_by_text)
+        p_sel = selected_value(p_text, principal_id_by_text)
+        rows.append({
+            "student": s,
+            "teacher_selected": t_sel,
+            "teacher_custom": t_text if t_sel == KEEP else "",
+            "principal_selected": p_sel,
+            "principal_custom": p_text if p_sel == KEEP else "",
+        })
+ 
+    return render(request, "academics/class_remarks.html", {
+        "arms": arms,
+        "terms": terms,
+        "arm": arm,
+        "term": term,
+        "rows": rows,
+        "teacher_options": teacher_options,
+        "principal_options": principal_options,
+        "keep": KEEP,
     })

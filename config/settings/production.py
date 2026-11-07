@@ -4,7 +4,9 @@ from .base import *
 
 # Pull secure production credentials from Render environment variables
 SECRET_KEY = os.getenv('SECRET_KEY')
-DEBUG = False
+
+# Allow DEBUG to be turned on locally via environment variables, defaulting to False
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 # Allow traffic from all Render web domains
 ALLOWED_HOSTS = ['*']
@@ -12,14 +14,23 @@ ALLOWED_HOSTS = ['*']
 # Whitenoise Middleware inserted after SecurityMiddleware
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
-# Configure database for Neon PostgreSQL using Render's DATABASE_URL environment variable
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL'),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+# Configure database dynamically (handles SQLite locally vs Neon PostgreSQL in production)
+db_url = os.getenv('DATABASE_URL')
+if db_url and db_url.startswith('sqlite'):
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=db_url,
+            conn_max_age=600
+        )
+    }
+else:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=db_url,
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 

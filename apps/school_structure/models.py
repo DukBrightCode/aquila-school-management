@@ -66,6 +66,7 @@ class ClassLevel(models.Model):
 class ClassArm(models.Model):
     class_level = models.ForeignKey(ClassLevel, on_delete=models.CASCADE, related_name="arms")
     name = models.CharField(max_length=10, help_text="e.g. A, B, C")
+    
     class_teacher = models.ForeignKey(
         "staff.Teacher",
         null=True,
@@ -73,9 +74,17 @@ class ClassArm(models.Model):
         on_delete=models.SET_NULL,
         related_name="class_arms_led"
     )
+    class_teachers = models.ManyToManyField(
+        "staff.Teacher",
+        blank=True,
+        related_name="class_arms_led_new",     # temporary name, fixed in stage 3
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
+    
+    
     class Meta:
         ordering = ["class_level__order", "name"]
         unique_together = ("class_level", "name")

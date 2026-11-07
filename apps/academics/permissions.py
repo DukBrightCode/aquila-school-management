@@ -1,12 +1,11 @@
 from apps.academics.models import ResultRelease
 from apps.school_structure.models import ClassArm, Subject
 
-
 def scoreable_arms(teacher):
     """
-    Returns the class arms where the teacher is the class teacher.
+    Returns the class arms where the teacher is one of the class teachers.
     """
-    return teacher.class_arms_led.all()
+    return ClassArm.objects.filter(class_teachers=teacher).select_related("class_level")
 
 
 def offered_subjects(arm):
@@ -21,7 +20,7 @@ def scoreable_subjects(teacher, arm):
     Returns the subjects a teacher can enter scores for in a given arm.
     Only if the teacher is the class teacher of that arm.
     """
-    if arm.class_teacher == teacher:
+    if arm.class_teachers.filter(pk=teacher.pk).exists():
         return offered_subjects(arm)
     return Subject.objects.none()
 

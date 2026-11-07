@@ -451,13 +451,10 @@ def api_get_predefined_remarks(request):
 
 @role_required("TEACHER")
 def teacher_student_list(request):
-    teacher = Teacher.objects.filter(user=request.user).first()
-    if not teacher:
-        messages.error(request, "Teacher profile not found.")
-        return redirect("dashboard:teacher")
-
-    led_arms = teacher.class_arms_led.all()
-    if not led_arms:
+    # Use the helper function for consistency
+    led_arms = _class_teacher_arms(request.user)
+    
+    if not led_arms.exists():
         messages.error(request, "You are not assigned as a class teacher to any class arm.")
         return redirect("dashboard:teacher")
 
@@ -475,13 +472,9 @@ def teacher_student_list(request):
 
 @role_required("TEACHER")
 def teacher_student_add(request):
-    teacher = Teacher.objects.filter(user=request.user).first()
-    if not teacher:
-        messages.error(request, "Teacher profile not found.")
-        return redirect("dashboard:teacher")
-
-    led_arms = teacher.class_arms_led.all()
-    if not led_arms:
+    led_arms = _class_teacher_arms(request.user)
+    
+    if not led_arms.exists():
         messages.error(request, "You are not assigned as a class teacher to any class arm.")
         return redirect("dashboard:teacher")
 
@@ -503,13 +496,9 @@ def teacher_student_add(request):
 
 @role_required("TEACHER")
 def teacher_student_edit(request, pk):
-    teacher = Teacher.objects.filter(user=request.user).first()
-    if not teacher:
-        messages.error(request, "Teacher profile not found.")
-        return redirect("dashboard:teacher")
-
-    led_arms = teacher.class_arms_led.all()
-    if not led_arms:
+    led_arms = _class_teacher_arms(request.user)
+    
+    if not led_arms.exists():
         messages.error(request, "You are not assigned as a class teacher to any class arm.")
         return redirect("dashboard:teacher")
 
@@ -523,7 +512,6 @@ def teacher_student_edit(request, pk):
             return redirect("dashboard:teacher_student_list")
     else:
         form = TeacherStudentForm(instance=student, arms=led_arms)
-        # Pre-select the current class arm
         if student.current_class_arm:
             form.fields['class_arm'].initial = student.current_class_arm
 
@@ -565,6 +553,13 @@ def teacher_class_subjects(request, arm_id):
         for s in Subject.objects.all()
     ]
     return render(request, "dashboard/teacher/class_subjects.html", {"arm": arm, "rows": rows})
+
+def _class_teacher_arms(user):
+    """Arms where this user is one of the class teachers."""
+    teacher = Teacher.objects.filter(user=user).first()
+    if not teacher:
+        return ClassArm.objects.none()
+    return ClassArm.objects.filter(class_teachers=teacher).select_related("class_level")
 
 @role_required("TEACHER")
 def teacher_class_subjects_home(request):
