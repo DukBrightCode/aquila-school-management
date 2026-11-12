@@ -70,7 +70,7 @@
                     </div>
                 </div>
             </a>
-    <!-- Class Results -->
+            <!-- Class Results -->
             <a href="{% url 'academics:report_card_list' %}" class="block p-4 border border-gray-200 rounded-lg hover:border-indigo-500 hover:shadow-md transition-all">
                 <div class="flex items-center space-x-3">
                     <div class="flex-shrink-0">
@@ -160,7 +160,7 @@
                     </div>
                 </div>
             </a>
-
+             
             <a href="{% url 'communication:list' %}" class="block p-4 border border-gray-200 rounded-lg hover:border-indigo-500 hover:shadow-md transition-all">
                 <div class="flex items-center space-x-3">
                     <div class="flex-shrink-0">
@@ -171,6 +171,21 @@
                     <div>
                         <h4 class="text-sm font-semibold text-gray-900">Announcements</h4>
                         <p class="text-xs text-gray-500">View school announcements</p>
+                    </div>
+                </div>
+            </a>
+        
+            <!-- Student Streams: add next to the other quick link cards -->
+            <a href="{% url 'academics:class_streams' %}" class="block p-4 border border-gray-200 rounded-lg hover:border-indigo-500 hover:shadow-md transition-all">
+                <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-900">Student Streams</h4>
+                        <p class="text-xs text-gray-500">Science, Art, Commercial</p>
                     </div>
                 </div>
             </a>
@@ -187,7 +202,7 @@
             <dd class="mt-1 text-3xl font-semibold text-yellow-600">{{ pending_scores_count }}</dd>
         </div>
     </div>
-
+    
     <!-- Timetable & Announcements -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Today's Timetable -->
@@ -207,7 +222,7 @@
                 {% endfor %}
             </div>
         </div>
-
+        
         <!-- Announcements -->
         <div class="bg-white shadow rounded-lg p-6 space-y-4">
             <h3 class="text-lg font-medium text-gray-900">Announcements</h3>

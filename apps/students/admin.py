@@ -56,6 +56,7 @@ class StudentAdmin(admin.ModelAdmin):
         "full_name",
         "current_class_level",
         "current_class_arm",
+        "stream",
         "has_login",
         "is_profile_complete",
         "guardian_name",
@@ -67,7 +68,20 @@ class StudentAdmin(admin.ModelAdmin):
         "last_name",
         "guardian_name",
     )
-    list_filter = (ProfileFilter, HasLoginFilter, "current_class_level", "current_class_arm", "gender")
+    list_filter = (
+        ProfileFilter, 
+        HasLoginFilter, 
+        "current_class_level", 
+        "current_class_arm", 
+        "stream", 
+        "gender"
+    )
+    
+    # Update or add your fieldsets configuration to include 'stream' under 'Class':
+    fieldsets = (
+        # ... your other fieldsets ...
+        ("Class", {"fields": ("current_class_level", "current_class_arm", "stream")}),
+    )
 
     def has_login(self, obj):
         return bool(obj.user)

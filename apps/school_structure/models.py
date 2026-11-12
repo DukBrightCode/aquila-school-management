@@ -92,6 +92,17 @@ class ClassArm(models.Model):
     def __str__(self):
         return f"{self.class_level.name} {self.name}"
 
+# Position this above class Subject:
+class Stream(models.Model):
+    """A group of students who take the same subjects, e.g. Science, Art, Commercial."""
+    name = models.CharField(max_length=50, unique=True, help_text="e.g. Science, Art, Commercial")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "name"]
+
+    def __str__(self):
+        return self.name
 
 class Subject(models.Model):
     name = models.CharField(max_length=100, unique=True, help_text="e.g. Mathematics, English Language")
@@ -105,7 +116,16 @@ class Subject(models.Model):
         related_name="subjects",
         blank=True
     )
-
+    
+    # Inside class Subject, place this next to class_arms:
+    streams = models.ManyToManyField(
+        Stream,
+        blank=True,
+        related_name="subjects",
+        help_text="Leave empty for a subject every student takes (core). "
+                  "Tick the streams that take this subject.",
+    )
+     
     class Meta:
         ordering = ["name"]
 

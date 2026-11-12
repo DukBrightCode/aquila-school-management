@@ -27,11 +27,11 @@ from .permissions import scoreable_arms, offered_subjects, scoreable_subjects
 
 
 from apps.accounts.permissions import role_required
-from apps.school_structure.models import ClassArm, Subject, Term
+from apps.school_structure.models import ClassArm, Subject, Term, Stream
 from apps.students.models import Student
 from apps.academics.models import AssessmentType, Score, ResultRelease, Skill, StudentSkillRating, PredefinedRemark, StudentReportRemark
 from apps.academics.services.result_mailer import build_report_card_context, send_result_email
-
+from apps.academics.streams import students_taking
 from apps.academics.permissions import (
     class_access_error,
     is_admin,
@@ -165,7 +165,9 @@ def score_entry_data(request):
         at["max_score"] = float(at["max_score"])
         at["weight_percentage"] = float(at["weight_percentage"])
  
-    students_qs = Student.objects.filter(current_class_arm_id=class_arm.id).order_by("last_name", "first_name")
+    subject = Subject.objects.get(id=subject_id)
+    # only the students who take this subject (by stream)
+    students_qs = students_taking(class_arm.id, subject).order_by("last_name", "first_name")
     students = [
         {"id": st.id, "admission_number": st.admission_number, "full_name": st.full_name}
         for st in students_qs
@@ -190,7 +192,8 @@ def score_entry_data(request):
         "students": students,
         "scores": scores_dict,
     })
-
+    
+ 
 @role_required("TEACHER", "ADMIN")
 @require_POST
 def score_entry_save(request):
@@ -223,9 +226,8 @@ def score_entry_save(request):
         c.id: c
         for c in AssessmentType.objects.filter(term_id=term_id, is_active=True, exam_type=exam_type)
     }
-    class_student_ids = set(
-        Student.objects.filter(current_class_arm_id=class_arm.id).values_list("id", flat=True)
-    )
+    subject = Subject.objects.get(id=subject_id)
+    class_student_ids = set(students_taking(class_arm.id, subject).values_list("id", flat=True))
  
     # ---- validate everything before writing anything -------------------------
     parsed = []          # (student_id, assessment_type_id, Decimal value)
@@ -239,7 +241,7 @@ def score_entry_save(request):
             errors.add("Invalid student.")
             continue
         if student_id not in class_student_ids:
-            errors.add("A student in the list is not in this class. Please reload the page.")
+            errors.add("A student in the list is not in this class or does not take this subject. Please reload the page.")
             continue
  
         scores = row.get("scores") or {}
@@ -968,4 +970,74 @@ def class_remarks(request):
         "teacher_options": teacher_options,
         "principal_options": principal_options,
         "keep": KEEP,
+    })
+
+@role_required("TEACHER", "ADMIN")
+def class_streams(request):
+    """
+    One page per class: tick Science / Art / Commercial for each student.
+    Only the class teachers of that class (and admins) can do this.
+    A student's stream decides which subjects appear on their report and in score entry.
+    """
+    user = request.user
+    if is_admin(user):
+        arms = ClassArm.objects.select_related("class_level")
+    else:
+        teacher = getattr(user, "teacher_profile", None)
+        arms = scoreable_arms(teacher) if teacher else ClassArm.objects.none()
+ 
+    data = request.POST if request.method == "POST" else request.GET
+    arm_param = data.get("arm", "")
+    arm = arms.filter(pk=arm_param).first() if arm_param.isdigit() else None
+    if arm is None and not arm_param and arms.count() == 1:
+        arm = arms.first()
+ 
+    streams = list(Stream.objects.order_by("order", "name"))
+    students = []
+    if arm:
+        students = list(Student.objects.filter(current_class_arm=arm).order_by("last_name", "first_name"))
+ 
+    # ---------------------------------------------------------------- save
+    if request.method == "POST":
+        if not arm:
+            messages.error(request, "Please choose a class.")
+            return redirect("academics:class_streams")
+ 
+        valid_ids = {str(s.id): s.id for s in streams}
+        to_update, rejected = [], 0
+        for st in students:
+            key = f"s_{st.id}"
+            if key not in request.POST:
+                continue                                 # not on the page: leave as it is
+            raw = request.POST[key].strip()
+            if raw == "":
+                new_stream = None
+            elif raw in valid_ids:
+                new_stream = valid_ids[raw]
+            else:
+                rejected += 1
+                continue
+            if st.stream_id != new_stream:
+                st.stream_id = new_stream
+                to_update.append(st)
+ 
+        with transaction.atomic():
+            if to_update:
+                Student.objects.bulk_update(to_update, ["stream"])
+ 
+        messages.success(request, f"Streams saved for {arm}.")
+        if rejected:
+            messages.warning(request, f"{rejected} choice(s) were ignored because they are not valid streams.")
+        return redirect(f"{reverse('academics:class_streams')}?arm={arm.id}")
+ 
+    # ---------------------------------------------------------------- show
+    rows = [{"student": s, "stream_id": s.stream_id} for s in students]
+    counts = [
+        {"name": st.name, "count": sum(1 for s in students if s.stream_id == st.id)}
+        for st in streams
+    ]
+    counts.append({"name": "Not set", "count": sum(1 for s in students if s.stream_id is None)})
+ 
+    return render(request, "academics/class_streams.html", {
+        "arms": arms, "arm": arm, "streams": streams, "rows": rows, "counts": counts,
     })

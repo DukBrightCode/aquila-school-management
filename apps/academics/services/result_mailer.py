@@ -12,7 +12,7 @@ from django.contrib.staticfiles import finders
 from apps.students.models import Student
 from apps.school_structure.models import Term, Subject
 from apps.academics.models import Score, StudentSkillRating, GradingScale
-
+from apps.academics.streams import subjects_for_student
 
 
 from apps.academics.services.grade_calculator import calculate_term_result
@@ -39,10 +39,11 @@ def build_report_card_context(student, term, *, logo_cid=None, logo_url=None, re
     if isinstance(term, int):
         term = Term.objects.select_related("session").get(pk=term)
 
-    subjects = Subject.objects.filter(class_arms=student.current_class_arm).order_by("name")
-    if not subjects.exists():
-        subjects = Subject.objects.all().order_by("name")
-
+    #subjects = Subject.objects.filter(class_arms=student.current_class_arm).order_by("name")
+    #if not subjects.exists():
+        #subjects = Subject.objects.all().order_by("name")
+    subjects = subjects_for_student(student)
+    
     results_table = []
     total_scores_sum = Decimal("0.00")
     graded_count = 0
@@ -96,7 +97,7 @@ def build_report_card_context(student, term, *, logo_cid=None, logo_url=None, re
     )
     
     position, total_students = class_position_info(
-      student, term, exam_type, subject_ids=[s.id for s in subjects]
+      student, term, exam_type
     )
     return {
         "student": student,

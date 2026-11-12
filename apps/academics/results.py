@@ -3,6 +3,7 @@ from collections import defaultdict
 from apps.academics.models import AssessmentType, GradingScale, Score, ClassSubjectTeacher
 
 from apps.students.models import Student
+from apps.academics.streams import arm_subjects, filter_by_stream
 TWO_PLACES = Decimal("0.01")
 
 
@@ -124,37 +125,41 @@ def report_components(term, exam_type):
     return comps
  
  
-def class_position_info(student, term, exam_type, subject_ids=None):
+def class_position_info(student, term, exam_type):
     """
-    Returns (position_text, total_students) for a student's class arm.
- 
-    position_text is like "3rd", or "N/A" if the student has no scores or no class.
-    Students are ranked by overall average (average of subject totals for the
-    subjects that have scores), the same rule as the report's Overall Average.
+    Returns (position_text, total_students) for the student's class arm.
+    Students are ranked by overall average over the subjects THEY take.
     """
-    arm_id = student.current_class_arm_id
-    if not arm_id:
+    arm = student.current_class_arm
+    if arm is None:
         return "N/A", 0
  
-    student_ids = list(
-        Student.objects.filter(current_class_arm_id=arm_id).values_list("id", flat=True)
+    classmates = list(
+        Student.objects.filter(current_class_arm_id=arm.id).values_list("id", "stream_id")
     )
-    total_students = len(student_ids)
+    total_students = len(classmates)
+    stream_of = dict(classmates)
+ 
+    # subjects each stream group takes, worked out once per stream
+    class_subjects = arm_subjects(arm)
+    allowed = {
+        stream_id: set(filter_by_stream(class_subjects, stream_id).values_list("id", flat=True))
+        for stream_id in set(stream_of.values())
+    }
  
     comps = report_components(term, exam_type)
     comp_by_id = {c.id: c for c in comps}
  
     scores = Score.objects.filter(
-        student_id__in=student_ids, term=term, assessment_type__in=comps
+        student_id__in=stream_of.keys(), term=term, assessment_type__in=comps
     )
-    if subject_ids is not None:
-        scores = scores.filter(subject_id__in=subject_ids)
  
-    # student -> subject -> total marks
-    totals = defaultdict(lambda: defaultdict(Decimal))
+    totals = defaultdict(lambda: defaultdict(Decimal))      # student -> subject -> marks
     for sid, subject_id, at_id, value in scores.values_list(
         "student_id", "subject_id", "assessment_type_id", "score_value"
     ):
+        if subject_id not in allowed[stream_of[sid]]:
+            continue                                         # a subject this student doesn't take
         comp = comp_by_id[at_id]
         totals[sid][subject_id] += Decimal(value) / comp.max_score * comp.weight_percentage
  

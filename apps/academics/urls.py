@@ -32,5 +32,6 @@ urlpatterns = [
          views.toggle_result_release, name="toggle_result_release"),
     path("skills/class/", views.class_skill_ratings, name="class_skill_ratings"),
     path("remarks/class/", views.class_remarks, name="class_remarks"),
+    path("streams/class/", views.class_streams, name="class_streams"),
 ]
     

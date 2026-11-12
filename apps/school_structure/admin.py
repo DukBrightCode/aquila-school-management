@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AcademicSession, Term, ClassLevel, ClassArm, Subject, ClassSubject
+from .models import AcademicSession, Term, ClassLevel, ClassArm, Subject, ClassSubject, Stream
 
 
 @admin.register(AcademicSession)
@@ -50,10 +50,20 @@ class ClassArmAdmin(admin.ModelAdmin):
 class SubjectAdmin(admin.ModelAdmin):
     list_display = ("name", "code", "created_at")
     search_fields = ("name", "code")
-
+       # Inside your SubjectAdmin class, add these two lines:
+    filter_horizontal = ("streams",)
+    list_filter = ("streams",)
+ 
 
 @admin.register(ClassSubject)
 class ClassSubjectAdmin(admin.ModelAdmin):
     list_display = ("class_level", "subject", "created_at")
     list_filter = ("class_level__category", "class_level", "subject")
     search_fields = ("class_level__name", "subject__name", "subject__code")
+
+@admin.register(Stream)
+class StreamAdmin(admin.ModelAdmin):
+    list_display = ("name", "order")
+    list_editable = ("order",)
+
+   
