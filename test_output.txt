@@ -1,0 +1,22 @@
+Creating test database for alias 'default'...
+EC:\Users\USER\Documents\Aquila_British_International_School_Management\venv\Lib\site-packages\django\core\handlers\base.py:63: UserWarning: No directory at: C:\Users\USER\Documents\Aquila_British_International_School_Management\staticfiles\
+  mw_instance = middleware(adapted_handler)
+.....
+======================================================================
+ERROR: tests_skill_ratings (unittest.loader._FailedTest.tests_skill_ratings)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: tests_skill_ratings
+Traceback (most recent call last):
+  File "C:\Users\USER\AppData\Local\Programs\Python\Python312\Lib\unittest\loader.py", line 129, in loadTestsFromName
+    module = __import__(module_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'apps.academics.tests_skill_ratings'
+
+
+----------------------------------------------------------------------
+Ran 6 tests in 46.717s
+
+FAILED (errors=1)
+Destroying test database for alias 'default'...
+Found 6 test(s).
+System check identified no issues (0 silenced).

@@ -33,5 +33,6 @@ urlpatterns = [
     path("skills/class/", views.class_skill_ratings, name="class_skill_ratings"),
     path("remarks/class/", views.class_remarks, name="class_remarks"),
     path("streams/class/", views.class_streams, name="class_streams"),
+    path("position/<int:class_arm_id>/toggle/", views.toggle_class_position, name="toggle_class_position"),
 ]
     

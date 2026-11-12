@@ -96,9 +96,14 @@ def build_report_card_context(student, term, *, logo_cid=None, logo_url=None, re
         .select_related("skill")
     )
     
-    position, total_students = class_position_info(
-      student, term, exam_type
-    )
+    arm = student.current_class_arm
+    show_position = arm.show_position if arm else True
+    if show_position:
+        position, total_students = class_position_info(student, term, exam_type)
+    else:
+        position = None
+        total_students = Student.objects.filter(current_class_arm=arm).count()
+
     return {
         "student": student,
         "term": term,
@@ -116,6 +121,7 @@ def build_report_card_context(student, term, *, logo_cid=None, logo_url=None, re
             GradingScale.objects.filter(exam_type=exam_type).order_by("-min_score")
         ),
         "position": position,
+        "show_position": show_position,
         "total_students": total_students,
     
     }

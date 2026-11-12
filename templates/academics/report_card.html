@@ -1,11 +1,11 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% if exam_type == 'MID_TERM' %}Mid-Term{% else %}Full-Term{% endif %} Report Card - {{ student.full_name }}</title>
-    <style>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% if exam_type == "MID_TERM" %}Mid-Term{% else %}Full-Term{% endif %} Report Card - {{ student.full_name }}</title>
+        <style>
         @page {
             size: A4 portrait;
             margin: 5mm 8mm;
@@ -235,305 +235,399 @@
                 background-color: #f7fafc !important;
             }
         }
-    </style>
-</head>
-<body>
-
-    <!-- Flash Messages (Hidden during printing) -->
-    {% if messages %}
-        <div class="no-print my-4 style-messages">
-            {% for message in messages %}
-                <div style="padding: 1rem; border-radius: 0.375rem; border-width: 1px; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;
-                    {% if message.tags == 'success' %}
-                        background-color: #f0fdf4; border-color: #bbf7d0; color: #166534;
-                    {% elif message.tags == 'error' %}
-                        background-color: #fef2f2; border-color: #fecaca; color: #991b1b;
-                    {% elif message.tags == 'warning' %}
-                        background-color: #fefce8; border-color: #fef08a; color: #854d0e;
-                    {% else %}
-                        background-color: #eff6ff; border-color: #bfdbfe; color: #1e40af;
-                    {% endif %}">
-                    <span>{{ message }}</span>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
-    <div class="report-header">
-        <table class="header-table">
-            <tr>
-                <!-- LEFT: School Logo -->
-                <td class="logo-box">
-                    {% if pdf_logo_path %}
-                        <img src="{{ pdf_logo_path }}" alt="School Logo" width="80" height="80">
-                    {% elif logo_cid %}
-                        <img src="cid:{{ logo_cid }}" alt="School Logo">
-                    {% elif logo_url %}
-                        <img src="{{ logo_url }}" alt="School Logo">
-                    {% else %}
-                        <img src="{% static 'src/images/logo.jpg' %}" alt="School Logo" width="80" height="80">
-                    {% endif %}
-                </td>
-
-                <!-- CENTER: School Details -->
-                <td class="school-info">
-                    <h1>{{ school_name }}</h1>
-                    <p>{{ school_motto }}</p>
-                    <div class="contact-info">
-                        Plot 110, N Crescent, Kapwa Junction, Near Christ Embassy Junction, Phase 2 Lugbe FCT Abuja<br>
-                        08161351248, 08051851894, 09062542583, 09062542584, 09062542582<br>
-                        www.aquilabritishinternationalschools.com
+        </style>
+    </head>
+    <body>
+        <!-- Flash Messages (Hidden during printing) -->
+        {% if messages %}
+            <div class="no-print my-4 style-messages">
+                {% for message in messages %}
+                    <div style="padding: 1rem;
+                                border-radius: 0.375rem;
+                                border-width: 1px;
+                                font-size: 0.875rem;
+                                font-weight: 500;
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                margin-bottom: 0.75rem;
+                                {% if message.tags == 'success' %} background-color: #f0fdf4;
+                                border-color: #bbf7d0;
+                                color: #166534;
+                                {% elif message.tags == 'error' %} background-color: #fef2f2;
+                                border-color: #fecaca;
+                                color: #991b1b;
+                                {% elif message.tags == 'warning' %} background-color: #fefce8;
+                                border-color: #fef08a;
+                                color: #854d0e;
+                                {% else %} background-color: #eff6ff;
+                                border-color: #bfdbfe;
+                                color: #1e40af;
+                                {% endif %}">
+                        <span>{{ message }}</span>
                     </div>
-                </td>
-
-                <!-- RIGHT: Student Passport Photo -->
-                <td class="photo-box">
-                    {% if pdf_student_photo %}
-                        <img src="{{ pdf_student_photo }}" alt="Student Photo" width="80" height="95" style="border: 1px solid #ccc;">
-                    {% elif student.photo %}
-                        <img src="{{ student.photo.url }}" alt="Student Photo" width="80" height="95" style="border: 1px solid #ccc;">
-                    {% else %}
-                        <img src="{% static 'src/images/default_avatar.png' %}" alt="Student Photo" width="80" height="95" style="border: 1px solid #ccc;">
-                    {% endif %}
-                </td>
-            </tr>
-        </table>
-    </div>
-
-    <table class="meta-table">
-        <tr>
-            <td style="width: 33%;"><strong>Student Name:</strong> {{ student.full_name }}</td>
-            <td style="width: 33%;"><strong>Admission No:</strong> {{ student.admission_number }}</td>
-            <td style="width: 34%;"><strong>Gender:</strong> {{ student.gender|default:"Not Specified" }}</td>
-        </tr>
-        <tr>
-            <td style="width: 33%;">
-                <strong>Class:</strong>
-                {{ student.current_class_level.name }}{% if student.current_class_arm %} - Arm {{ student.current_class_arm.name }}{% endif %}
-            </td>
-            <td style="width: 33%;"><strong>Academic Term:</strong> {{ term.name }} ({{ term.session.name }})</td>
-            <td style="width: 34%;"><strong>Exam Type:</strong> {% if exam_type == 'MID_TERM' %}Mid-Term Exam{% else %}Full-Term Exam{% endif %}</td>
-        </tr>
-        <tr>
-            <td style="width: 33%;"><strong>Total Score:</strong> {{ overall_average|add:0 }}%</td>
-            <td style="width: 33%;"><strong>Average Score:</strong> {{ overall_average }}%</td>
-            <td style="width: 34%;"><strong>No of Subjects:</strong> {{ results_table|length }}</td>
-        </tr>
-    </table>
-
-    <!-- SUBJECTS (left) + SKILLS AND BEHAVIOUR (right) -->
-    <table class="layout-table">
-        <tr>
-            <td class="layout-left" width="72%">
-
-                <table class="results-table">
-                    <thead>
-                        <tr>
-                            <th class="subject-header">Subject</th>
-                            {% if report_type == 'mid' %}
-                                <th>1st CA </th>
-                                <th>Mid Term </th>
-                            {% else %}
-                                <th>1st CA </th>
-                                <th>2nd CA </th>
-                                <th>Exam</th>
-                            {% endif %}
-                            <th>Total</th>
-                            <th>Grade</th>
-                            <th>Remark</th>
-                            <th>Teacher</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in results_table %}
-                            <tr>
-                                <td class="subject-cell">{{ row.subject }}</td>
-                                {% if report_type == 'mid' %}
-                                    <td>{{ row.ca1|default:"-" }}</td>
-                                    <td>{{ row.exam|default:"-" }}</td>
-                                {% else %}
-                                    <td>{{ row.ca1|default:"-" }}</td>
-                                    <td>{{ row.ca2|default:"-" }}</td>
-                                    <td>{{ row.exam|default:"-" }}</td>
-                                {% endif %}
-                                <td><strong>{{ row.total_score }}</strong></td>
-                                <td>{{ row.grade_letter }}</td>
-                                <td>{{ row.remark }}</td>
-                                <td class="subject-cell">{{ row.teacher|default:"-" }}</td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="{% if report_type == 'mid' %}6{% else %}8{% endif %}" style="text-align: center; color: #718096;">No subject scores recorded for this term.</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-
-            </td>
-            <td class="layout-right" width="28%">
-
-                <table class="skills-table">
-                    <thead>
-                        <tr>
-                            <th class="skill-name">Skills and Behaviour</th>
-                            <th>Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for r in skill_ratings %}
-                            <tr>
-                                <td class="skill-name">{{ r.skill.name }}</td>
-                                <td>{{ r.rating }}</td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="2" style="text-align: center; color: #718096;">No ratings recorded.</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                <p class="skills-legend">5 - Excellent, 4 - Very Good, 3 - Good, 2 - Fair, 1 - Poor</p>
-                 
-                 {% if grading_scale %}
-<table width="100%" cellspacing="0" cellpadding="3" style="border-collapse:collapse; margin-top:8px; font-size:9px;">
-    <tr>
-        <td colspan="3" style="background-color:#2c6eb5; color:#ffffff; font-weight:bold; text-align:center; border:1px solid #2c6eb5;">
-            GRADING SCALE ({% if exam_type == 'MID_TERM' %}MID-TERM{% else %}FULL-TERM{% endif %})
-        </td>
-    </tr>
-    <tr>
-        <td style="background-color:#eaf1fb; font-weight:bold; text-align:center; border:1px solid #c5d5ea;">GRADE</td>
-        <td style="background-color:#eaf1fb; font-weight:bold; text-align:center; border:1px solid #c5d5ea;">SCORE</td>
-        <td style="background-color:#eaf1fb; font-weight:bold; text-align:center; border:1px solid #c5d5ea;">REMARK</td>
-    </tr>
-    {% for g in grading_scale %}
-    <tr>
-        <td style="text-align:center; border:1px solid #c5d5ea;">{{ g.grade_letter }}</td>
-        <td style="text-align:center; border:1px solid #c5d5ea;">{{ g.min_score|floatformat:"-2" }} - {{ g.max_score|floatformat:"-2" }}</td>
-        <td style="text-align:center; border:1px solid #c5d5ea;">{{ g.remark }}</td>
-    </tr>
-    {% endfor %}
-</table>
-{% endif %}
- 
-
-            </td>
-        </tr>
-    </table>
-
-    <div class="summary-box">
-        <table style="width: 100%; border-collapse: collapse;">
+                {% endfor %}
+            </div>
+        {% endif %}
+        <div class="report-header">
+            <table class="header-table">
+                <tr>
+                    <!-- LEFT: School Logo -->
+                    <td class="logo-box">
+                        {% if pdf_logo_path %}
+                            <img src="{{ pdf_logo_path }}" alt="School Logo" width="80" height="80">
+                        {% elif logo_cid %}
+                            <img src="cid:{{ logo_cid }}" alt="School Logo">
+                        {% elif logo_url %}
+                            <img src="{{ logo_url }}" alt="School Logo">
+                        {% else %}
+                            <img src="{% static 'src/images/logo.jpg' %}"
+                                 alt="School Logo"
+                                 width="80"
+                                 height="80">
+                        {% endif %}
+                    </td>
+                    <!-- CENTER: School Details -->
+                    <td class="school-info">
+                        <h1>{{ school_name }}</h1>
+                        <p>{{ school_motto }}</p>
+                        <div class="contact-info">
+                            Plot 110, N Crescent, Kapwa Junction, Near Christ Embassy Junction, Phase 2 Lugbe FCT Abuja
+                            <br>
+                            08161351248, 08051851894, 09062542583, 09062542584, 09062542582
+                            <br>
+                            www.aquilabritishinternationalschools.com
+                        </div>
+                    </td>
+                    <!-- RIGHT: Student Passport Photo -->
+                    <td class="photo-box">
+                        {% if pdf_student_photo %}
+                            <img src="{{ pdf_student_photo }}"
+                                 alt="Student Photo"
+                                 width="80"
+                                 height="95"
+                                 style="border: 1px solid #ccc">
+                        {% elif student.photo %}
+                            <img src="{{ student.photo.url }}"
+                                 alt="Student Photo"
+                                 width="80"
+                                 height="95"
+                                 style="border: 1px solid #ccc">
+                        {% else %}
+                            <img src="{% static 'src/images/default_avatar.png' %}"
+                                 alt="Student Photo"
+                                 width="80"
+                                 height="95"
+                                 style="border: 1px solid #ccc">
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <table class="meta-table">
             <tr>
-              <td style="text-align: left; border: none; font-size: 9pt;">Overall Average:</td>
-                <td style="text-align: right; border: none; font-size: 12pt; color: #2b6cb0;">{{ overall_average }}%</td>
-                <td style="text-align: left; border: none; font-size: 9pt;">Position in Class:</td>
-                <td style="text-align: right; border: none; font-size: 12pt; color: #2b6cb0;">{{ position|default:"N/A" }}</td>
-                <td style="text-align: left; border: none; font-size: 9pt;">Total Students:</td>
-                <td style="text-align: right; border: none; font-size: 12pt; color: #2b6cb0;">{{ total_students|default:"N/A" }}</td>
+                <td style="width: 33%;"><strong>Student Name:</strong> {{ student.full_name }}</td>
+                <td style="width: 33%;"><strong>Admission No:</strong> {{ student.admission_number }}</td>
+                <td style="width: 34%;"><strong>Gender:</strong> {{ student.gender|default:"Not Specified" }}</td>
+            </tr>
+            <tr>
+                <td style="width: 33%;">
+                    <strong>Class:</strong>
+                    {{ student.current_class_level.name }}{% if student.current_class_arm %} - Arm {{ student.current_class_arm.name }}{% endif %}
+                </td>
+                <td style="width: 33%;"><strong>Academic Term:</strong> {{ term.name }} ({{ term.session.name }})</td>
+                <td style="width: 34%;"><strong>Exam Type:</strong> {% if exam_type == "MID_TERM" %}Mid-Term Exam{% else %}Full-Term Exam{% endif %}</td>
+            </tr>
+            <tr>
+                <td style="width: 33%;"><strong>Total Score:</strong> {{ overall_average|add:0 }}%</td>
+                <td style="width: 33%;"><strong>Average Score:</strong> {{ overall_average }}%</td>
+                <td style="width: 34%;"><strong>No of Subjects:</strong> {{ results_table|length }}</td>
             </tr>
         </table>
-    </div>
-
-    <!-- REMARKS AND SIGNATURES SECTION -->
-    <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
-
-        <!-- 1. CLASS TEACHER REMARK & SIGNATURE ROW -->
-        <div style="display: flex; gap: 1rem; align-items: stretch;">
-            <!-- Class Teacher Remark -->
-            <div style="flex: 2; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.75rem; background-color: #f8fafc;">
-                <h4 style="font-size: 0.75rem; font-weight: 700; color: #1e293b; margin: 0 0 0.35rem 0; text-transform: uppercase;">
-                    Class Teacher's Remarks
-                </h4>
-                <p style="font-size: 0.75rem; color: #334155; margin: 0; font-style: italic;">
-                    {% if report_remark and report_remark.teacher_remark %}
-                        {{ report_remark.teacher_remark }}
-                    {% elif overall_average >= 70 %}
-                        An excellent academic performance throughout the term. Keep up the high standard!
-                    {% elif overall_average >= 50 %}
-                        A good effort shown this term. Continual consistency will yield even better results.
-                    {% else %}
-                        Requires additional attention and dedication to improve academic standing in upcoming terms.
+        <!-- SUBJECTS (left) + SKILLS AND BEHAVIOUR (right) -->
+        <table class="layout-table">
+            <tr>
+                <td class="layout-left" width="72%">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th class="subject-header">Subject</th>
+                                {% if report_type == "mid" %}
+                                    <th>1st CA</th>
+                                    <th>Mid Term</th>
+                                {% else %}
+                                    <th>1st CA</th>
+                                    <th>2nd CA</th>
+                                    <th>Exam</th>
+                                {% endif %}
+                                <th>Total</th>
+                                <th>Grade</th>
+                                <th>Remark</th>
+                                <th>Teacher</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in results_table %}
+                                <tr>
+                                    <td class="subject-cell">{{ row.subject }}</td>
+                                    {% if report_type == "mid" %}
+                                        <td>{{ row.ca1|default:"-" }}</td>
+                                        <td>{{ row.exam|default:"-" }}</td>
+                                    {% else %}
+                                        <td>{{ row.ca1|default:"-" }}</td>
+                                        <td>{{ row.ca2|default:"-" }}</td>
+                                        <td>{{ row.exam|default:"-" }}</td>
+                                    {% endif %}
+                                    <td><strong>{{ row.total_score }}</strong></td>
+                                    <td>{{ row.grade_letter }}</td>
+                                    <td>{{ row.remark }}</td>
+                                    <td class="subject-cell">{{ row.teacher|default:"-" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="{% if report_type == 'mid' %}6{% else %}8{% endif %}"
+                                        style="text-align: center;
+                                               color: #718096">No subject scores recorded for this term.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </td>
+                <td class="layout-right" width="28%">
+                    <table class="skills-table">
+                        <thead>
+                            <tr>
+                                <th class="skill-name">Skills and Behaviour</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in skill_ratings %}
+                                <tr>
+                                    <td class="skill-name">{{ r.skill.name }}</td>
+                                    <td>{{ r.rating }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="2"
+                                        style="text-align: center;
+                                               color: #718096">No ratings recorded.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <p class="skills-legend">5 - Excellent, 4 - Very Good, 3 - Good, 2 - Fair, 1 - Poor</p>
+                    {% if grading_scale %}
+                        <table width="100%"
+                               cellspacing="0"
+                               cellpadding="3"
+                               style="border-collapse:collapse;
+                                      margin-top:8px;
+                                      font-size:9px">
+                            <tr>
+                                <td colspan="3"
+                                    style="background-color:#2c6eb5;
+                                           color:#ffffff;
+                                           font-weight:bold;
+                                           text-align:center;
+                                           border:1px solid #2c6eb5">
+                                    GRADING SCALE ({% if exam_type == "MID_TERM" %}MID-TERM{% else %}FULL-TERM{% endif %})
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="background-color:#eaf1fb;
+                                           font-weight:bold;
+                                           text-align:center;
+                                           border:1px solid #c5d5ea">GRADE</td>
+                                <td style="background-color:#eaf1fb;
+                                           font-weight:bold;
+                                           text-align:center;
+                                           border:1px solid #c5d5ea">SCORE</td>
+                                <td style="background-color:#eaf1fb;
+                                           font-weight:bold;
+                                           text-align:center;
+                                           border:1px solid #c5d5ea">REMARK</td>
+                            </tr>
+                            {% for g in grading_scale %}
+                                <tr>
+                                    <td style="text-align:center; border:1px solid #c5d5ea;">{{ g.grade_letter }}</td>
+                                    <td style="text-align:center; border:1px solid #c5d5ea;">{{ g.min_score|floatformat:"-2" }} - {{ g.max_score|floatformat:"-2" }}</td>
+                                    <td style="text-align:center; border:1px solid #c5d5ea;">{{ g.remark }}</td>
+                                </tr>
+                            {% endfor %}
+                        </table>
                     {% endif %}
-                </p>
-            </div>
-
-            <!-- Class Teacher Signature & Date -->
-            <div style="flex: 1; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.75rem; background-color: #ffffff; display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                    <span style="font-size: 0.7rem; font-weight: 600; color: #64748b; display: block; margin-bottom: 0.25rem;">
-                        Teacher's Signature
-                    </span>
-                    {% if report_remark and report_remark.teacher_signature %}
-                        <img src="{{ report_remark.teacher_signature.url }}" alt="Teacher Signature" style="max-height: 35px; object-fit: contain;">
-                    {% else %}
-                        <div style="border-bottom: 1px dashed #94a3b8; margin-top: 1.5rem; width: 80%;"></div>
-                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        <div class="summary-box">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: left; border: none; font-size: 9pt;">Overall Average:</td>
+                    <td style="text-align: right;
+                               border: none;
+                               font-size: 12pt;
+                               color: #2b6cb0">{{ overall_average }}%</td>
+                    <td style="text-align: left; border: none; font-size: 9pt;">Position in Class:</td>
+                    <td style="text-align: right;
+                               border: none;
+                               font-size: 12pt;
+                               color: #2b6cb0">{{ position|default:"N/A" }}</td>
+                    <td style="text-align: left; border: none; font-size: 9pt;">Total Students:</td>
+                    <td style="text-align: right;
+                               border: none;
+                               font-size: 12pt;
+                               color: #2b6cb0">{{ total_students|default:"N/A" }}</td>
+                </tr>
+            </table>
+        </div>
+        <!-- REMARKS AND SIGNATURES SECTION -->
+        <div style="margin-top: 1.5rem;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1rem">
+            <!-- 1. CLASS TEACHER REMARK & SIGNATURE ROW -->
+            <div style="display: flex; gap: 1rem; align-items: stretch;">
+                <!-- Class Teacher Remark -->
+                <div style="flex: 2;
+                            border: 1px solid #cbd5e1;
+                            border-radius: 6px;
+                            padding: 0.75rem;
+                            background-color: #f8fafc">
+                    <h4 style="font-size: 0.75rem;
+                               font-weight: 700;
+                               color: #1e293b;
+                               margin: 0 0 0.35rem 0;
+                               text-transform: uppercase">Class Teacher's Remarks</h4>
+                    <p style="font-size: 0.75rem;
+                              color: #334155;
+                              margin: 0;
+                              font-style: italic">
+                        {% if report_remark and report_remark.teacher_remark %}
+                            {{ report_remark.teacher_remark }}
+                        {% elif overall_average >= 70 %}
+                            An excellent academic performance throughout the term. Keep up the high standard!
+                        {% elif overall_average >= 50 %}
+                            A good effort shown this term. Continual consistency will yield even better results.
+                        {% else %}
+                            Requires additional attention and dedication to improve academic standing in upcoming terms.
+                        {% endif %}
+                    </p>
                 </div>
-                <div style="font-size: 0.7rem; color: #475569; margin-top: 0.5rem;">
-                    <strong>Date:</strong> {{ report_remark.date_printed|date:"d/m/Y"|default:today_date|default:"" }}
+                <!-- Class Teacher Signature & Date -->
+                <div style="flex: 1;
+                            border: 1px solid #cbd5e1;
+                            border-radius: 6px;
+                            padding: 0.75rem;
+                            background-color: #ffffff;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: space-between">
+                    <div>
+                        <span style="font-size: 0.7rem;
+                                     font-weight: 600;
+                                     color: #64748b;
+                                     display: block;
+                                     margin-bottom: 0.25rem">Teacher's Signature</span>
+                        {% if report_remark and report_remark.teacher_signature %}
+                            <img src="{{ report_remark.teacher_signature.url }}"
+                                 alt="Teacher Signature"
+                                 style="max-height: 35px;
+                                        object-fit: contain">
+                        {% else %}
+                            <div style="border-bottom: 1px dashed #94a3b8;
+                                        margin-top: 1.5rem;
+                                        width: 80%"></div>
+                        {% endif %}
+                    </div>
+                    <div style="font-size: 0.7rem; color: #475569; margin-top: 0.5rem;">
+                        <strong>Date:</strong> {{ report_remark.date_printed|date:"d/m/Y"|default:today_date|default:"" }}
+                    </div>
+                </div>
+            </div>
+            <!-- 2. PRINCIPAL REMARK & SIGNATURE ROW -->
+            <div style="display: flex; gap: 1rem; align-items: stretch;">
+                <!-- Principal Remark -->
+                <div style="flex: 2;
+                            border: 1px solid #cbd5e1;
+                            border-radius: 6px;
+                            padding: 0.75rem;
+                            background-color: #f8fafc">
+                    <h4 style="font-size: 0.75rem;
+                               font-weight: 700;
+                               color: #1e293b;
+                               margin: 0 0 0.35rem 0;
+                               text-transform: uppercase">Principal's Remarks</h4>
+                    <p style="font-size: 0.75rem;
+                              color: #334155;
+                              margin: 0;
+                              font-style: italic">
+                        {% if report_remark and report_remark.principal_remark %}
+                            {{ report_remark.principal_remark }}
+                        {% else %}
+                            Outstanding result. Recommended for promotion.
+                        {% endif %}
+                    </p>
+                </div>
+                <!-- Principal Signature & Date -->
+                <div style="flex: 1;
+                            border: 1px solid #cbd5e1;
+                            border-radius: 6px;
+                            padding: 0.75rem;
+                            background-color: #ffffff;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: space-between">
+                    <div>
+                        <span style="font-size: 0.7rem;
+                                     font-weight: 600;
+                                     color: #64748b;
+                                     display: block;
+                                     margin-bottom: 0.25rem">Principal's Signature</span>
+                        {% if report_remark and report_remark.principal_signature %}
+                            <img src="{{ report_remark.principal_signature.url }}"
+                                 alt="Principal Signature"
+                                 style="max-height: 35px;
+                                        object-fit: contain">
+                        {% else %}
+                            <div style="border-bottom: 1px dashed #94a3b8;
+                                        margin-top: 1.5rem;
+                                        width: 80%"></div>
+                        {% endif %}
+                    </div>
+                    <div style="font-size: 0.7rem; color: #475569; margin-top: 0.5rem;">
+                        <strong>Date:</strong> {{ report_remark.date_printed|date:"d/m/Y"|default:today_date|default:"" }}
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- 2. PRINCIPAL REMARK & SIGNATURE ROW -->
-        <div style="display: flex; gap: 1rem; align-items: stretch;">
-            <!-- Principal Remark -->
-            <div style="flex: 2; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.75rem; background-color: #f8fafc;">
-                <h4 style="font-size: 0.75rem; font-weight: 700; color: #1e293b; margin: 0 0 0.35rem 0; text-transform: uppercase;">
-                    Principal's Remarks
-                </h4>
-                <p style="font-size: 0.75rem; color: #334155; margin: 0; font-style: italic;">
-                    {% if report_remark and report_remark.principal_remark %}
-                        {{ report_remark.principal_remark }}
-                    {% else %}
-                        Outstanding result. Recommended for promotion.
-                    {% endif %}
-                </p>
+        <!-- Action Buttons -->
+        <div class="actions no-print">
+            <button onclick="window.print()" class="btn-action">Print Page</button>
+            <!-- Download Options -->
+            <div style="display: inline-block; margin-left: 8px;">
+                <select id="examTypeSelect"
+                        onchange="updateDownloadLinks()"
+                        style="padding: 8px;
+                               border-radius: 4px;
+                               border: 1px solid #cbd5e0">
+                    <option value="FULL_TERM"
+                            {% if exam_type == 'FULL_TERM' %}selected{% endif %}>Full Term Exam</option>
+                    <option value="MID_TERM" {% if exam_type == 'MID_TERM' %}selected{% endif %}>Mid-Term Exam</option>
+                </select>
+                <a id="downloadPdfBtn"
+                   href="{% url 'academics:generate_report_card_pdf' student.id term.id exam_type 'full' %}"
+                   class="btn-action">Download PDF</a>
             </div>
-
-            <!-- Principal Signature & Date -->
-            <div style="flex: 1; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.75rem; background-color: #ffffff; display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                    <span style="font-size: 0.7rem; font-weight: 600; color: #64748b; display: block; margin-bottom: 0.25rem;">
-                        Principal's Signature
-                    </span>
-                    {% if report_remark and report_remark.principal_signature %}
-                        <img src="{{ report_remark.principal_signature.url }}" alt="Principal Signature" style="max-height: 35px; object-fit: contain;">
-                    {% else %}
-                        <div style="border-bottom: 1px dashed #94a3b8; margin-top: 1.5rem; width: 80%;"></div>
-                    {% endif %}
-                </div>
-                <div style="font-size: 0.7rem; color: #475569; margin-top: 0.5rem;">
-                    <strong>Date:</strong> {{ report_remark.date_printed|date:"d/m/Y"|default:today_date|default:"" }}
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="actions no-print">
-        <button onclick="window.print()" class="btn-action">Print Page</button>
-
-        <!-- Download Options -->
-        <div style="display: inline-block; margin-left: 8px;">
-            <select id="examTypeSelect" onchange="updateDownloadLinks()" style="padding: 8px; border-radius: 4px; border: 1px solid #cbd5e0;">
-                <option value="FULL_TERM" {% if exam_type == 'FULL_TERM' %}selected{% endif %}>Full Term Exam</option>
-                <option value="MID_TERM" {% if exam_type == 'MID_TERM' %}selected{% endif %}>Mid-Term Exam</option>
-            </select>
-            <a id="downloadPdfBtn" href="{% url 'academics:generate_report_card_pdf' student.id term.id exam_type 'full' %}" class="btn-action">Download PDF</a>
-        </div>
-
-        <!-- Updated Compose Email Link -->
-        <a href="{% url 'academics:send_single_result_email' student.id term.id %}"
-           class="btn-action btn-email inline-flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-            </svg>
-            Send Email
-        </a>
-
-        <script>
+            <!-- Updated Compose Email Link -->
+            <a href="{% url 'academics:send_single_result_email' student.id term.id %}"
+               class="btn-action btn-email inline-flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Send Email
+            </a>
+            <script>
             function updateDownloadLinks() {
                 const examType = document.getElementById('examTypeSelect').value;
                 const studentId = {{ student.id }};
@@ -541,8 +635,7 @@
                 const newUrl = `/academics/report-card/${studentId}/${termId}/${examType}/full/pdf/`;
                 document.getElementById('downloadPdfBtn').href = newUrl;
             }
-        </script>
-    </div>
-
-</body>
+            </script>
+        </div>
+    </body>
 </html>

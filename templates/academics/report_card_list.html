@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -52,9 +52,10 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Class</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Mid Term</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Full Term</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">Class position</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+             <tbody class="bg-white divide-y divide-gray-200">
                     {% for row in release_rows %}
                     <tr>
                         <td class="px-6 py-3 text-sm font-medium text-gray-900">{{ row.arm }}</td>
@@ -87,6 +88,17 @@
                                 </button>
                             </form>
                             {% endif %}
+                        </td>
+
+                        <td class="px-6 py-3 text-sm">
+                            {% if row.position_on %}<span class="text-green-700 mr-2">Shown</span>{% else %}<span class="text-gray-400 mr-2">Hidden</span>{% endif %}
+                            <form method="post" action="{% url 'academics:toggle_class_position' row.arm.id %}" class="inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="term" value="{{ current_term.id }}">
+                                <button type="submit" class="text-xs border rounded px-2 py-1 {% if row.position_on %}border-red-300 text-red-700{% else %}border-green-300 text-green-700{% endif %}">
+                                    {% if row.position_on %}Turn off{% else %}Turn on{% endif %}
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}

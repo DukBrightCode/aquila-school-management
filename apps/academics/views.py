@@ -622,6 +622,7 @@ def report_card_list(request):
             "arm": a,
             "mid_released": (a.id, "MID_TERM") in released,
             "full_released": (a.id, "FULL_TERM") in released,
+            "position_on": a.show_position,
         }
         for a in arms_shown
     ]
@@ -639,6 +640,34 @@ def report_card_list(request):
     }
     return render(request, "academics/report_card_list.html", context)
 
+
+@role_required("TEACHER", "ADMIN")
+@require_POST
+def toggle_class_position(request, class_arm_id: int):
+    """
+    Turns 'Position in Class' on or off on the report cards of a whole class.
+    Admins: any class. Class teachers: only the classes they lead.
+    """
+    arm = get_object_or_404(ClassArm, id=class_arm_id)
+
+    user = request.user
+    if not is_admin(user):
+        teacher = getattr(user, "teacher_profile", None)
+        if not teacher or not scoreable_arms(teacher).filter(id=arm.id).exists():
+            messages.error(request, "Permission denied. You are not the class teacher for this class.")
+            return redirect("academics:report_card_list")
+
+    arm.show_position = not arm.show_position
+    arm.save(update_fields=["show_position"])
+
+    if arm.show_position:
+        messages.success(request, f"Class position will now be shown on {arm} report cards.")
+    else:
+        messages.success(request, f"Class position is now hidden on {arm} report cards.")
+
+    term = request.POST.get("term", "")
+    suffix = f"?term={term}" if term.isdigit() else ""
+    return redirect(f"{reverse('academics:report_card_list')}{suffix}")
 
 # API endpoint for teachers/admins to fetch remarks dynamically
 def api_get_predefined_remarks(request):

@@ -79,7 +79,10 @@ class ClassArm(models.Model):
         blank=True,
         related_name="class_arms_led_new",     # temporary name, fixed in stage 3
     )
-    
+    show_position = models.BooleanField(
+        default=True,
+        help_text="Show each student's position in class on report cards.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
