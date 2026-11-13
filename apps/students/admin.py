@@ -76,11 +76,12 @@ class StudentAdmin(admin.ModelAdmin):
         "stream", 
         "gender"
     )
+    filter_horizontal = ("elective_subjects",)
     
     # Update or add your fieldsets configuration to include 'stream' under 'Class':
     fieldsets = (
         # ... your other fieldsets ...
-        ("Class", {"fields": ("current_class_level", "current_class_arm", "stream")}),
+        ("Class", {"fields": ("current_class_level", "current_class_arm", "stream", "elective_subjects")}),
     )
 
     def has_login(self, obj):
@@ -108,25 +109,6 @@ class StudentAdmin(admin.ModelAdmin):
                 messages.error(request, str(e))
 
     actions = ['create_login_accounts_action']
-
-    @admin.action(description='Create login accounts for selected students')
-    def create_login_accounts_action(self, request, queryset):
-        count = 0
-        for student in queryset:
-            try:
-                username, password = student.create_login_account()
-                messages.warning(
-                    request,
-                    f"Login account created for {student.full_name}. Username: {username}, Password: {password}"
-                )
-                count += 1
-            except ValueError as e:
-                messages.error(request, f"Failed for {student.full_name}: {str(e)}")
-
-        if count > 0:
-            messages.success(request, f"Successfully created {count} login account(s).")
-        else:
-            messages.warning(request, "No login accounts were created.")
 
 
 @admin.register(AdmissionCounter)

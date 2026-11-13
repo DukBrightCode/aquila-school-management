@@ -34,5 +34,6 @@ urlpatterns = [
     path("remarks/class/", views.class_remarks, name="class_remarks"),
     path("streams/class/", views.class_streams, name="class_streams"),
     path("position/<int:class_arm_id>/toggle/", views.toggle_class_position, name="toggle_class_position"),
+    path("electives/class/", views.class_electives, name="class_electives"),
 ]
     

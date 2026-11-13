@@ -61,6 +61,12 @@ class Student(models.Model):
         on_delete=models.SET_NULL,
         related_name="students",
     )
+    elective_subjects = models.ManyToManyField(
+        "school_structure.Subject",
+        blank=True,
+        related_name="elective_students",
+        limit_choices_to={"is_elective": True},
+    )
     guardian_name = models.CharField(max_length=255, blank=True)
     guardian_phone = models.CharField(max_length=20, blank=True)
     guardian_email = models.EmailField(blank=True)

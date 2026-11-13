@@ -128,7 +128,12 @@ class Subject(models.Model):
         help_text="Leave empty for a subject every student takes (core). "
                   "Tick the streams that take this subject.",
     )
-     
+    is_elective = models.BooleanField(
+        default=False,
+        help_text="Tick if students only take this subject when they choose it "
+                  "(for example Fashion Design). Nobody gets an elective by default.",
+    )
+    
     class Meta:
         ordering = ["name"]
 

@@ -103,8 +103,9 @@ class StreamAdmin(admin.ModelAdmin):
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
-    list_display = ("name", "code", "stream_names", "created_at")
-    list_filter = ("streams",)
+    list_display = ("name", "code", "stream_names", "is_elective", "created_at")
+    list_editable = ("is_elective",)            # tick electives straight from the list
+    list_filter = ("is_elective", "streams")
     search_fields = ("name", "code")
     filter_horizontal = ("streams",)
 
@@ -122,3 +123,4 @@ class ClassSubjectAdmin(admin.ModelAdmin):
     list_display = ("class_level", "subject", "created_at")
     list_filter = ("class_level__category", "class_level", "subject")
     search_fields = ("class_level__name", "subject__name", "subject__code")
+

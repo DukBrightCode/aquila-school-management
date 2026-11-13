@@ -5,6 +5,8 @@ import logging
 import os
 
 from decimal import Decimal, InvalidOperation
+from collections import defaultdict
+
 from django.conf import settings
 from django.db import transaction
 from django.urls import reverse
@@ -31,7 +33,7 @@ from apps.school_structure.models import ClassArm, Subject, Term, Stream
 from apps.students.models import Student
 from apps.academics.models import AssessmentType, Score, ResultRelease, Skill, StudentSkillRating, PredefinedRemark, StudentReportRemark
 from apps.academics.services.result_mailer import build_report_card_context, send_result_email
-from apps.academics.streams import students_taking
+from apps.academics.streams import students_taking, StudentElective, arm_subjects
 from apps.academics.permissions import (
     class_access_error,
     is_admin,
@@ -1069,4 +1071,88 @@ def class_streams(request):
  
     return render(request, "academics/class_streams.html", {
         "arms": arms, "arm": arm, "streams": streams, "rows": rows, "counts": counts,
+    })
+    
+@role_required("TEACHER", "ADMIN")
+def class_electives(request):
+    """
+    Tick, for each student of the class, the elective subjects they take.
+    Only the class teachers of that class (and admins) can do this.
+    Only subjects the class offers AND the admin marked as elective are shown.
+    """
+    user = request.user
+    if is_admin(user):
+        arms = ClassArm.objects.select_related("class_level")
+    else:
+        teacher = getattr(user, "teacher_profile", None)
+        arms = scoreable_arms(teacher) if teacher else ClassArm.objects.none()
+
+    data = request.POST if request.method == "POST" else request.GET
+    arm_param = data.get("arm", "")
+    arm = arms.filter(pk=arm_param).first() if arm_param.isdigit() else None
+    if arm is None and not arm_param and arms.count() == 1:
+        arm = arms.first()
+
+    electives = list(arm_subjects(arm).filter(is_elective=True).order_by("name")) if arm else []
+    elective_ids = {e.id for e in electives}
+    students = []
+    if arm:
+        students = list(
+            Student.objects.filter(current_class_arm=arm)
+            .select_related("stream")
+            .order_by("last_name", "first_name")
+        )
+
+    chosen = defaultdict(set)
+    if students and electives:
+        rows = StudentElective.objects.filter(
+            student__in=students, subject_id__in=elective_ids
+        ).values_list("student_id", "subject_id")
+        for student_id, subject_id in rows:
+            chosen[student_id].add(subject_id)
+
+    # ---------------------------------------------------------------- save
+    if request.method == "POST":
+        if not arm:
+            messages.error(request, "Please choose a class.")
+            return redirect("academics:class_electives")
+
+        changed = 0
+        with transaction.atomic():
+            for st in students:
+                if f"row_{st.id}" not in request.POST:
+                    continue                             # row not on the page: leave as it is
+                wanted = {
+                    int(v) for v in request.POST.getlist(f"e_{st.id}")
+                    if v.isdigit() and int(v) in elective_ids     # only this class's electives
+                }
+                have = chosen[st.id]
+                if wanted != have:
+                    to_remove, to_add = have - wanted, wanted - have
+                    if to_remove:
+                        StudentElective.objects.filter(student_id=st.id, subject_id__in=to_remove).delete()
+                    if to_add:
+                        StudentElective.objects.bulk_create(
+                            [StudentElective(student_id=st.id, subject_id=sid) for sid in to_add]
+                        )
+                    changed += 1
+
+        messages.success(request, f"Electives saved for {arm} ({changed} student(s) changed).")
+        return redirect(f"{reverse('academics:class_electives')}?arm={arm.id}")
+
+    # ---------------------------------------------------------------- show
+    rows = [
+        {
+            "student": s,
+            "cells": [{"subject_id": e.id, "checked": e.id in chosen[s.id]} for e in electives],
+        }
+        for s in students
+    ]
+    headers = [
+        {"name": e.name, "count": sum(1 for s in students if e.id in chosen[s.id])}
+        for e in electives
+    ]
+
+    return render(request, "academics/class_electives.html", {
+        "arms": arms, "arm": arm, "electives": electives, "headers": headers, "rows": rows,
     })

@@ -3,7 +3,7 @@ from collections import defaultdict
 from apps.academics.models import AssessmentType, GradingScale, Score, ClassSubjectTeacher
 
 from apps.students.models import Student
-from apps.academics.streams import arm_subjects, filter_by_stream
+from apps.academics.streams import allowed_subject_ids_by_student
 TWO_PLACES = Decimal("0.01")
 
 
@@ -128,50 +128,41 @@ def report_components(term, exam_type):
 def class_position_info(student, term, exam_type):
     """
     Returns (position_text, total_students) for the student's class arm.
-    Students are ranked by overall average over the subjects THEY take.
+    Each student is ranked by overall average over the subjects THEY take
+    (their stream's subjects plus any electives they were given).
     """
     arm = student.current_class_arm
     if arm is None:
         return "N/A", 0
- 
-    classmates = list(
-        Student.objects.filter(current_class_arm_id=arm.id).values_list("id", "stream_id")
-    )
-    total_students = len(classmates)
-    stream_of = dict(classmates)
- 
-    # subjects each stream group takes, worked out once per stream
-    class_subjects = arm_subjects(arm)
-    allowed = {
-        stream_id: set(filter_by_stream(class_subjects, stream_id).values_list("id", flat=True))
-        for stream_id in set(stream_of.values())
-    }
- 
+
+    allowed = allowed_subject_ids_by_student(arm)          # {student_id: {subject ids}}
+    total_students = len(allowed)
+
     comps = report_components(term, exam_type)
     comp_by_id = {c.id: c for c in comps}
- 
+
     scores = Score.objects.filter(
-        student_id__in=stream_of.keys(), term=term, assessment_type__in=comps
+        student_id__in=allowed.keys(), term=term, assessment_type__in=comps
     )
- 
+
     totals = defaultdict(lambda: defaultdict(Decimal))      # student -> subject -> marks
     for sid, subject_id, at_id, value in scores.values_list(
         "student_id", "subject_id", "assessment_type_id", "score_value"
     ):
-        if subject_id not in allowed[stream_of[sid]]:
+        if subject_id not in allowed[sid]:
             continue                                         # a subject this student doesn't take
         comp = comp_by_id[at_id]
         totals[sid][subject_id] += Decimal(value) / comp.max_score * comp.weight_percentage
- 
+
     averages = {}
     for sid, per_subject in totals.items():
         if per_subject:
             average = sum(per_subject.values()) / len(per_subject)
             averages[sid] = average.quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
- 
+
     if student.id not in averages:
         return "N/A", total_students
- 
+
     mine = averages[student.id]
     position = 1 + sum(1 for other in averages.values() if other > mine)
     return ordinal(position), total_students
